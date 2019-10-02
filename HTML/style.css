@@ -1,0 +1,15 @@
+body {
+   background-color: #000;
+}
+
+button { 
+  background-color: #fff
+}
+
+.canvas_div {
+  width: 800px;
+  height: 500px;
+  border: 10px solid #333;
+  background-color: #fff;
+  margin: auto;
+}
