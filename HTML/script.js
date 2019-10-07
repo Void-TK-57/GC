@@ -130,8 +130,6 @@ function onDown(event) {
                 }
             }
             break;
-        case 4:
-            mousePressed = true;
     }
 }
 
@@ -142,16 +140,16 @@ function onMove(event) {
         switch(buttonAction) {
             // if the action is translate
             case 4: 
-            {
-                x = (event.clientX - pincel.canvas.offsetLeft) - cx;
-                y = (event.clientY - pincel.canvs.offsetTop) - cy;
+            {   
+                var x = event.clientX - pincel.canvas.offsetLeft - cx;
+                var y = event.clientY - pincel.canvas.offsetTop - cy;
                 pincel.save();
 
                 var backCanvas = document.createElement('canvas');
                 backCanvas.width = canvas.width;
                 backCanvas.height  = canvas.height;
                 var backCanvasCtx = backCanvas.getContext('2d');
-                backCanvas.drawImage(canvas, 0, 0);
+                backCanvasCtx.drawImage(canvas, 0, 0);
 
                 pincel.transform(1, 0, 0, 1, x, y);
                 pincel.clearRect(0, 0, canvas.width, canvas.height);
@@ -159,7 +157,7 @@ function onMove(event) {
                 pincel.drawImage(backCanvas, 0, 0);
                 pincel.restore();
                 cx = event.clientX - pincel.canvas.offsetLeft;
-                cy = event.clientY - pincel.canvs.offsetTop;
+                cy = event.clientY - pincel.canvas.offsetTop;
                 break;
             }
             
