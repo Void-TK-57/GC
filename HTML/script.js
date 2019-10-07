@@ -1,5 +1,3 @@
-var linearAlgebra = require('linear-algebra')();
-
 //get canvas and pincel
 var canvas = document.getElementById('canvas');
 var pincel = canvas.getContext('2d');
@@ -10,20 +8,21 @@ var buttonAction = -1;
 // variable which indicates if a drawing was alread started
 var drawing_mode = false;
 
+var mousePressed = false;
+
 // buffer for the coordinates of the drawing
 var buffer = [];
 
-function mudacor(obj, cor) {
-    obj.style.backgroundColor = cor;
-}
+var cx = 0;
+var cy = 0;
 
 // function to be callend when the event of clicking the mouse is triggered
 function onDown(event) {
-    var m = new Matrix([ [1, 2, 3], [4, 5, 6] ]);
-    alert(m);
     // get the relative position x and y of the mouse on the drawing canvas
     cx = event.clientX - pincel.canvas.offsetLeft;
     cy = event.clientY - pincel.canvas.offsetTop;
+    // set mouse pressed to true
+    mousePressed = true;
     // swittch between the action mode
     switch (buttonAction) {
         case 0:
@@ -88,7 +87,6 @@ function onDown(event) {
                 drawing_mode = false;
             }
             break;
-
         case 3:
             // check if a drawing was already started
             if (!drawing_mode) {
@@ -132,7 +130,45 @@ function onDown(event) {
                 }
             }
             break;
+        case 4:
+            mousePressed = true;
     }
+}
+
+function onMove(event) {
+    // check if the mouse is pressed
+    if (mousePressed) {
+        // check action
+        switch(buttonAction) {
+            // if the action is translate
+            case 4: 
+            {
+                x = (event.clientX - pincel.canvas.offsetLeft) - cx;
+                y = (event.clientY - pincel.canvs.offsetTop) - cy;
+                pincel.save();
+
+                var backCanvas = document.createElement('canvas');
+                backCanvas.width = canvas.width;
+                backCanvas.height  = canvas.height;
+                var backCanvasCtx = backCanvas.getContext('2d');
+                backCanvas.drawImage(canvas, 0, 0);
+
+                pincel.transform(1, 0, 0, 1, x, y);
+                pincel.clearRect(0, 0, canvas.width, canvas.height);
+
+                pincel.drawImage(backCanvas, 0, 0);
+                pincel.restore();
+                cx = event.clientX - pincel.canvas.offsetLeft;
+                cy = event.clientY - pincel.canvs.offsetTop;
+                break;
+            }
+            
+        }
+    }
+}
+
+function onUp(event) {
+    mousePressed = false;
 }
 
 // for each button element, add a event listener for the click, which will execute the function to change the button to its corresponding code
@@ -144,6 +180,19 @@ document.getElementById('button_circle').addEventListener("click", function() { 
 
 document.getElementById('button_polygon').addEventListener("click", function() { buttonAction = 3});
 
+document.getElementById('button_translate').addEventListener("click", function() { buttonAction = 4});
+
+document.getElementById('button_rotate').addEventListener("click", function() { buttonAction = 5});
+
+document.getElementById('button_scale').addEventListener("click", function() { buttonAction = 6});
+
+document.getElementById('button_clear').addEventListener("click", function() { 
+    buttonAction = -1;
+    pincel.clearRect(0, 0, canvas.width, canvas.height);
+});
+
 
 // add a event listener to the canvas to click event to call the onDown function
-canvas.addEventListener("click", onDown)
+canvas.addEventListener("mousedown", onDown);
+canvas.addEventListener("mouseup", onUp);
+canvas.addEventListener("mousemove", onMove);
