@@ -8,6 +8,9 @@ var buttonAction = -1;
 // variable which indicates if a drawing was alread started
 var drawing_mode = false;
 
+// rotation mode ( 0 = select origin point, 1 = select vector point, 2 = rotationate the vector formed by the 2 points selected)
+var rotation_mode = 0;
+
 var mousePressed = false;
 
 // buffer for the coordinates of the drawing
@@ -130,6 +133,11 @@ function onDown(event) {
                 }
             }
             break;
+        case 5:
+            // add coordinates to buffer
+            buffer.push([cx, cy]);
+            // increase mode
+            rotation_mode++;
     }
 }
 
@@ -140,7 +148,6 @@ function onMove(event) {
         switch(buttonAction) {
             // if the action is translate
             case 4: 
-            {   
                 var x = event.clientX - pincel.canvas.offsetLeft - cx;
                 var y = event.clientY - pincel.canvas.offsetTop - cy;
                 pincel.save();
@@ -159,35 +166,103 @@ function onMove(event) {
                 cx = event.clientX - pincel.canvas.offsetLeft;
                 cy = event.clientY - pincel.canvas.offsetTop;
                 break;
-            }
-            
+            case 5:
+                // check if the mode ir rotationate
+                if (rotation_mode == 2) {
+                    // get second and first coordinates
+                    first = buffer[0];
+                    second = buffer.pop();
+                    // get current coordinate
+                    cx = event.clientX - pincel.canvas.offsetLeft;
+                    cy = event.clientY - pincel.canvas.offsetTop;
+                    pincel.save();
+
+                    var backCanvas = document.createElement('canvas');
+                    backCanvas.width = canvas.width;
+                    backCanvas.height  = canvas.height;
+                    var backCanvasCtx = backCanvas.getContext('2d');
+                    backCanvasCtx.drawImage(canvas, 0, 0);
+
+                    //calcualte agnle
+                    var angle = getAngleOf3Points(first[0], first[1], second[0], second[1], cx, cy);
+
+                    pincel.transform(
+                        Math.cos(angle), -Math.sin(angle),
+                        Math.sin(angle),  Math.cos(angle),
+                                0      ,         0       );
+                    pincel.clearRect(0, 0, canvas.width, canvas.height);
+
+                    pincel.drawImage(backCanvas, 0, 0);
+                    pincel.restore();
+
+                    // add the new point to the buffer
+                    buffer.push([cx, cy]);
+                }
+
         }
     }
 }
 
 function onUp(event) {
     mousePressed = false;
+    // check action
+    switch(buttonAction) {
+
+        case 5:
+            //check if the mode is to ratationate
+            if (rotation_mode == 2) {
+                // then set the mode to select the orgigin points again
+                rotation_mode = 0;
+            }
+    }
+}
+
+// function to get the distance between 2 points
+function getDistance(x1, x2, y1, y2) {
+    return Math.sqrt( Math.pow( x1-x2, 2) + Math.pow( y1-y2, 2) );
+}
+
+// function to get the angle formed by 3 points (as 2 latter points connect to the first point)
+function getAngleOf3Points(x1, y1, x2, y2, x3, y3) {
+    // get the distance of the line
+    var d12 = getDistance(x1, y1, x2, y2);
+    var d13 = getDistance(x1, y1, x3, y3);
+    var d23 = getDistance(x2, y2, x3, y3);
+    // apply cossine law and return the result
+    return Math.acos( ( d12*d12 + d23*d23 - d23*d23) / (2*d12*d13) );
+}
+
+// function to reset action
+function resetAction(newaction = -1) {
+    if (newaction == -1) {
+        // the also reset canvas
+        pincel.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    buttonAction = newaction;
+    drawing_mode = false;
+    rotation_mode = 0;
+    mousePressed = false;
+    // clear buffer
+    buffer = [];
+
 }
 
 // for each button element, add a event listener for the click, which will execute the function to change the button to its corresponding code
-document.getElementById('button_point').addEventListener("click", function() { buttonAction = 0});
+document.getElementById('button_point').addEventListener("click", function() {resetAction(0); } );
 
-document.getElementById('button_line').addEventListener("click", function() { buttonAction = 1});
+document.getElementById('button_line').addEventListener("click", function() {resetAction(1); } );
 
-document.getElementById('button_circle').addEventListener("click", function() { buttonAction = 2});
+document.getElementById('button_circle').addEventListener("click", function() {resetAction(2); } );
 
-document.getElementById('button_polygon').addEventListener("click", function() { buttonAction = 3});
+document.getElementById('button_polygon').addEventListener("click", function() {resetAction(3); } );
 
-document.getElementById('button_translate').addEventListener("click", function() { buttonAction = 4});
+document.getElementById('button_translate').addEventListener("click", function() {resetAction(4); } );
 
-document.getElementById('button_rotate').addEventListener("click", function() { buttonAction = 5});
+document.getElementById('button_rotate').addEventListener("click", function() {resetAction(5); } );
 
-document.getElementById('button_scale').addEventListener("click", function() { buttonAction = 6});
+document.getElementById('button_scale').addEventListener("click", function() {resetAction(6); } );
 
-document.getElementById('button_clear').addEventListener("click", function() { 
-    buttonAction = -1;
-    pincel.clearRect(0, 0, canvas.width, canvas.height);
-});
+document.getElementById('button_clear').addEventListener("click", function() {resetAction(-1); } );
 
 
 // add a event listener to the canvas to click event to call the onDown function
