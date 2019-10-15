@@ -192,6 +192,8 @@ function onDown(event) {
         case 3:
             // check if a drawing was already started
             if (!drawing_mode) {
+                // start path
+                pincel.beginPath();
                 // add current coordinates to the buffer
                 buffer.push([cx, cy]);
                 // set drawing mode to true
@@ -212,10 +214,10 @@ function onDown(event) {
                     pincel.stroke();
                     // close path
                     pincel.closePath();
-                    
-                    // create cicle object
+
+                    // create line object
                     polygon = new Polygon( buffer );
-                
+
                     // add to objects
                     objects["Polygon"].push(polygon);
 
@@ -226,6 +228,8 @@ function onDown(event) {
                     drawing_mode = false;
 
                 } else {
+                    // then create a line to the current coordinates calculated
+                    pincel.lineTo(cx, cy);
                     // push cx and cy to buffer
                     buffer.push([cx, cy]);
                     // stroke on the canvas
@@ -338,10 +342,6 @@ function getAngleOf3Points(x1, y1, x2, y2, x3, y3) {
 
 // function to reset action
 function resetAction(newaction = -1) {
-    if (newaction == -1) {
-        // the also reset canvas
-        pincel.clearRect(0, 0, canvas.width, canvas.height);
-    }
     buttonAction = newaction;
     drawing_mode = false;
     rotation_mode = 0;
@@ -349,6 +349,16 @@ function resetAction(newaction = -1) {
     // clear buffer
     buffer = [];
 
+}
+
+// function to clear canvas
+function clearCanvas() {
+    pincel.clearRect(0, 0, canvas.width, canvas.height);
+    resetAction();
+}
+
+function renderObjects() {
+    
 }
 
 // for each button element, add a event listener for the click, which will execute the function to change the button to its corresponding code
@@ -366,7 +376,9 @@ document.getElementById('button_rotate').addEventListener("click", function() {r
 
 document.getElementById('button_scale').addEventListener("click", function() {resetAction(6); } );
 
-document.getElementById('button_clear').addEventListener("click", function() {resetAction(-1); } );
+document.getElementById('button_clear').addEventListener("click", clearCanvas );
+
+document.getElementById('button_clear').addEventListener("click", renderObjects );
 
 
 // add a event listener to the canvas to click event to call the onDown function
