@@ -69,16 +69,30 @@ class Polygon {
 
     // method to render 
     render(pincel) {
-        // begin path
-        pincel.beginPath();
-        // move pincel to that coordinates
-        pincel.moveTo(this.point1[0], this.point1[1]);
-        // then create a line to the current coordinates calculated
-        pincel.lineTo(this.point2[0], this.point2[1]);
-        // stroke on the canvas
-        pincel.stroke();
-        // close path
-        pincel.closePath();
+        // create a copy of the coordinates
+        var copy = this.coordinates.slice()
+        // push to copy the first element (to complete the polygon)
+        copy.push(copy[0]);
+        
+        var coordinate = 0;
+        var next_coordinate = 0;
+        // for each coordinate
+        for (let index = 0; index < this.coordinates.length;) {
+            coordinate = this.coordinates[index++];
+            next_coordinate = copy[index];
+            // begin path
+            pincel.beginPath();
+            // move pincel to that coordinates
+            pincel.moveTo(coordinate[0], coordinate[1]);
+            // then create a line to the current coordinates calculated
+            pincel.lineTo(next_coordinate[0], next_coordinate[1]);
+            // stroke on the canvas
+            pincel.stroke();
+            // close path
+            pincel.closePath();
+            
+        }
+        
     }
 }
 
@@ -216,7 +230,7 @@ function onDown(event) {
                     pincel.closePath();
 
                     // create line object
-                    polygon = new Polygon( buffer );
+                    polygon = new Polygon( buffer.slice() );
 
                     // add to objects
                     objects["Polygon"].push(polygon);
@@ -358,6 +372,18 @@ function clearCanvas() {
 }
 
 function renderObjects() {
+    // get types of objects
+    const keys = Object.keys(objects);
+    // for each type
+    for (const key of keys) {
+        // for each object of that type
+        for (let index = 0; index < objects[key].length; index++) {
+            const element = objects[key][index];
+            // render element
+            element.render(pincel);
+            
+        }
+    }
     
 }
 
@@ -376,9 +402,9 @@ document.getElementById('button_rotate').addEventListener("click", function() {r
 
 document.getElementById('button_scale').addEventListener("click", function() {resetAction(6); } );
 
-document.getElementById('button_clear').addEventListener("click", clearCanvas );
+document.getElementById('button_clear').addEventListener("click", function() {clearCanvas();} );
 
-document.getElementById('button_clear').addEventListener("click", renderObjects );
+document.getElementById('button_restore').addEventListener("click", function() {renderObjects(); } );
 
 
 // add a event listener to the canvas to click event to call the onDown function
