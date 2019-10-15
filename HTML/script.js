@@ -1,3 +1,87 @@
+//main object classes
+class Point {
+
+    constructor(coordinates) {
+        this.coordinates = coordinates;
+    }
+
+    // method to render the point
+    render(pincel) {
+        // start path
+        pincel.beginPath();
+        // create a small circle at the pouse coordenates (full arc with radius 1)
+        pincel.arc(this.coordinates[0], this.coordinates[1], 1, 0, Math.PI*2 );
+        // fill on the canvas
+        pincel.fill();
+        //close path
+        pincel.closePath();
+    }
+    
+}
+
+class Line {
+
+    constructor(point1, point2) {
+        this.point1 = point1;
+        this.point2 = point2;
+    }
+
+    // method to render 
+    render(pincel) {
+        // begin path
+        pincel.beginPath();
+        // move pincel to that coordinates
+        pincel.moveTo(this.point1[0], this.point1[1]);
+        // then create a line to the current coordinates calculated
+        pincel.lineTo(this.point2[0], this.point2[1]);
+        // stroke on the canvas
+        pincel.stroke();
+        // close path
+        pincel.closePath();
+    }
+}
+
+class Circle {
+
+    constructor(coordinates, radius) {
+        this.coordinates = coordinates;
+        this.radius = radius;
+    }
+
+    render(pincel) {
+        //  begin path
+        pincel.beginPath();
+        // create a arc with the coordinate on the buffer as the center
+        pincel.arc(this.coordinates[0], this.coordinates[1], this.radius, 0, Math.PI*2 );
+        // stroke on the canvas
+        pincel.stroke();
+        // close path
+        pincel.closePath();
+    }
+
+}
+
+class Polygon {
+
+    constructor(coordinates) {
+        this.coordinates = coordinates;
+    }
+
+    // method to render 
+    render(pincel) {
+        // begin path
+        pincel.beginPath();
+        // move pincel to that coordinates
+        pincel.moveTo(this.point1[0], this.point1[1]);
+        // then create a line to the current coordinates calculated
+        pincel.lineTo(this.point2[0], this.point2[1]);
+        // stroke on the canvas
+        pincel.stroke();
+        // close path
+        pincel.closePath();
+    }
+}
+
 //get canvas and pincel
 var canvas = document.getElementById('canvas');
 var pincel = canvas.getContext('2d');
@@ -16,6 +100,9 @@ var mousePressed = false;
 // buffer for the coordinates of the drawing
 var buffer = [];
 
+// objects of the canvas
+var objects = {"Line" : [], "Point" : [], "Circle" : [], "Polygon" : []};
+
 var cx = 0;
 var cy = 0;
 
@@ -30,21 +117,24 @@ function onDown(event) {
     switch (buttonAction) {
         case 0:
             // if the mode selected is point (code: 0)
-            // start path
-            pincel.beginPath();
-            // create a small circle at the pouse coordenates (full arc with radius 1)
-            pincel.arc(cx, cy, 1, 0, Math.PI*2 );
-            // fill on the canvas
-            pincel.fill();
-            //close path
-            pincel.closePath();
+            
+            // create a point object
+            point = new Point( [cx, cy] );
+
+            // add to objects
+            objects["Point"].push(point);
+
+            // clear buffer
+            buffer = [];
+
+            // render point
+            point.render(pincel);
+
             break;
+
         case 1:
             // check if a drawing was already started
             if (!drawing_mode) {
-                // creeate 
-                // start path
-                pincel.beginPath();
                 // add current coordinates to the buffer
                 buffer.push([cx, cy]);
                 // set drawing mode to true
@@ -53,23 +143,25 @@ function onDown(event) {
             } else {
                 // else, then a starting point for the line was already calculated and stored, so get them on the buffer
                 coordinates = buffer.pop();
-                // move pincel to that coordinates
-                pincel.moveTo(coordinates[0], coordinates[1]);
-                // then create a line to the current coordinates calculated
-                pincel.lineTo(cx, cy);
-                // stroke on the canvas
-                pincel.stroke();
-                // close path
-                pincel.closePath();
+
+                // create line object
+                line = new Line( coordinates, [cx, cy] );
+
+                // add to objects
+                objects["Line"].push(line);
+
+                // clear buffer
+                buffer = [];
+
+                // render point
+                line.render(pincel);
+                
                 // for last, set drawing mode to false again
                 drawing_mode = false;
             }
             break;
         case 2:
             if (!drawing_mode) {
-                // creeate 
-                // start path
-                pincel.beginPath();
                 // add current coordinates to the buffer
                 buffer.push([cx, cy]);
                 // set drawing mode to true
@@ -80,12 +172,19 @@ function onDown(event) {
                 coordinates = buffer.pop();
                 // calculate radius
                 var radius = Math.sqrt( Math.pow(coordinates[0]- cx, 2) + Math.pow(coordinates[1]- cy, 2) );
-                // create a arc with the coordinate on the buffer as the center
-                pincel.arc(coordinates[0], coordinates[1], radius, 0, Math.PI*2 );
-                // stroke on the canvas
-                pincel.stroke();
-                // close path
-                pincel.closePath();
+
+                // create cicle object
+                circle = new Circle( coordinates , radius);
+                
+                // add to objects
+                objects["Circle"].push(circle);
+
+                // clear buffer
+                buffer = [];
+
+                // render circle
+                circle.render(pincel);
+                
                 // for last, set drawing mode to false again
                 drawing_mode = false;
             }
@@ -93,8 +192,6 @@ function onDown(event) {
         case 3:
             // check if a drawing was already started
             if (!drawing_mode) {
-                // start path
-                pincel.beginPath();
                 // add current coordinates to the buffer
                 buffer.push([cx, cy]);
                 // set drawing mode to true
@@ -115,13 +212,20 @@ function onDown(event) {
                     pincel.stroke();
                     // close path
                     pincel.closePath();
+                    
+                    // create cicle object
+                    polygon = new Polygon( buffer );
+                
+                    // add to objects
+                    objects["Polygon"].push(polygon);
+
+                    // clear buffer
+                    buffer = [];
+                
                     // for last, set drawing mode to false again
                     drawing_mode = false;
-                    // empty buffer
-                    buffer = [];
+
                 } else {
-                    // then create a line to the current coordinates calculated
-                    pincel.lineTo(cx, cy);
                     // push cx and cy to buffer
                     buffer.push([cx, cy]);
                     // stroke on the canvas
