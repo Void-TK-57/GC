@@ -16,6 +16,11 @@ class Point {
         //close path
         pincel.closePath();
     }
+
+    // funtion which indicates with the point was selected by a tolrence t
+    collision(x, y, t = 5) {
+        return (this.coordinates[0] < x + t) && (this.coordinates[0] > x - t) && (this.coordinates[1] < y + t) && (this.coordinates[1] > y - t);
+    }
     
 }
 
@@ -64,35 +69,41 @@ class Circle {
 class Polygon {
 
     constructor(coordinates) {
-        this.coordinates = coordinates;
+        this.coordinates = this.generateLine(coordinates);
+    }
+
+    // method to create a line based on the coordinates
+    generateLine(coordinates) {
+        // create a copy of the coordinates
+        var copy = coordinates.slice()
+        // new coordinates based on line
+        var new_coordinates = [];
+        // push to copy the first element (to complete the polygon)
+        copy.push(copy[0]);
+        
+        // coordinate and next coordinate for each line (aka first and second point)
+        var coordinate = 0;
+        var next_coordinate = 0;
+        // for each coordinate
+        for (let index = 0; index < coordinates.length;) {
+            coordinate = coordinates[index++];
+            next_coordinate = copy[index];
+            // create a Line
+            line = new Line(coordinate, next_coordinate);
+            // push it to the new coordinates
+            new_coordinates.push(line);
+        }
+        // return the new coordinates
+        return new_coordinates;
     }
 
     // method to render 
     render(pincel) {
-        // create a copy of the coordinates
-        var copy = this.coordinates.slice()
-        // push to copy the first element (to complete the polygon)
-        copy.push(copy[0]);
-        
-        var coordinate = 0;
-        var next_coordinate = 0;
-        // for each coordinate
-        for (let index = 0; index < this.coordinates.length;) {
-            coordinate = this.coordinates[index++];
-            next_coordinate = copy[index];
-            // begin path
-            pincel.beginPath();
-            // move pincel to that coordinates
-            pincel.moveTo(coordinate[0], coordinate[1]);
-            // then create a line to the current coordinates calculated
-            pincel.lineTo(next_coordinate[0], next_coordinate[1]);
-            // stroke on the canvas
-            pincel.stroke();
-            // close path
-            pincel.closePath();
-            
+        // for each line
+        for (let index = 0; index < this.coordinates.length; index++) {
+            const line = this.coordinates[index];
+            line.render(pincel);
         }
-        
     }
 }
 
@@ -101,6 +112,16 @@ var canvas = document.getElementById('canvas');
 var pincel = canvas.getContext('2d');
 
 // variable representes current action to do on the canvas
+/*
+ * 0 - Point
+ * 1 - Line
+ * 2 - Circle
+ * 3 - Polygon
+ * 4 - Translate
+ * 5 - Rotate
+ * 6 - Scale
+ * 7 - Select
+ */
 var buttonAction = -1;
 
 // variable which indicates if a drawing was alread started
@@ -116,15 +137,17 @@ var buffer = [];
 
 // objects of the canvas
 var objects = {"Line" : [], "Point" : [], "Circle" : [], "Polygon" : []};
+// selected object
+var selected_object = null;
 
-var cx = 0;
-var cy = 0;
+var mouse_x = 0;
+var mouse_y = 0;
 
 // function to be callend when the event of clicking the mouse is triggered
 function onDown(event) {
     // get the relative position x and y of the mouse on the drawing canvas
-    cx = event.clientX - pincel.canvas.offsetLeft;
-    cy = event.clientY - pincel.canvas.offsetTop;
+    mouse_x = event.clientX - pincel.canvas.offsetLeft;
+    mouse_y = event.clientY - pincel.canvas.offsetTop;
     // set mouse pressed to true
     mousePressed = true;
     // swittch between the action mode
@@ -133,7 +156,7 @@ function onDown(event) {
             // if the mode selected is point (code: 0)
             
             // create a point object
-            point = new Point( [cx, cy] );
+            point = new Point( [mouse_x, mouse_y] );
 
             // add to objects
             objects["Point"].push(point);
@@ -150,7 +173,7 @@ function onDown(event) {
             // check if a drawing was already started
             if (!drawing_mode) {
                 // add current coordinates to the buffer
-                buffer.push([cx, cy]);
+                buffer.push([mouse_x, mouse_y]);
                 // set drawing mode to true
                 drawing_mode = true;
                 
@@ -159,7 +182,7 @@ function onDown(event) {
                 coordinates = buffer.pop();
 
                 // create line object
-                line = new Line( coordinates, [cx, cy] );
+                line = new Line( coordinates, [mouse_x, mouse_y] );
 
                 // add to objects
                 objects["Line"].push(line);
@@ -177,7 +200,7 @@ function onDown(event) {
         case 2:
             if (!drawing_mode) {
                 // add current coordinates to the buffer
-                buffer.push([cx, cy]);
+                buffer.push([mouse_x, mouse_y]);
                 // set drawing mode to true
                 drawing_mode = true;
                 
@@ -185,7 +208,7 @@ function onDown(event) {
                 // else, then a starting point for the line was already calculated and stored, so get them on the buffer
                 coordinates = buffer.pop();
                 // calculate radius
-                var radius = Math.sqrt( Math.pow(coordinates[0]- cx, 2) + Math.pow(coordinates[1]- cy, 2) );
+                var radius = Math.sqrt( Math.pow(coordinates[0]- mouse_x, 2) + Math.pow(coordinates[1]- mouse_y, 2) );
 
                 // create cicle object
                 circle = new Circle( coordinates , radius);
@@ -209,7 +232,7 @@ function onDown(event) {
                 // start path
                 pincel.beginPath();
                 // add current coordinates to the buffer
-                buffer.push([cx, cy]);
+                buffer.push([mouse_x, mouse_y]);
                 // set drawing mode to true
                 drawing_mode = true;
                 
@@ -221,7 +244,7 @@ function onDown(event) {
                 // move pincel to that coordinates
                 pincel.moveTo(coordinates[0], coordinates[1]);
                 // check if the coordinates is close to the first coordinates
-                if ( (Math.abs(buffer[0][0] - cx) <= 4) && (Math.abs(buffer[0][1] - cy) <= 4) ) {
+                if ( (Math.abs(buffer[0][0] - mouse_x) <= 4) && (Math.abs(buffer[0][1] - mouse_y) <= 4) ) {
                     // then create a line to the current coordinates calculated
                     pincel.lineTo(buffer[0][0], buffer[0][1]);
                     // stroke on the canvas
@@ -243,9 +266,9 @@ function onDown(event) {
 
                 } else {
                     // then create a line to the current coordinates calculated
-                    pincel.lineTo(cx, cy);
-                    // push cx and cy to buffer
-                    buffer.push([cx, cy]);
+                    pincel.lineTo(mouse_x, mouse_y);
+                    // push mouse_x and mouse_y to buffer
+                    buffer.push([mouse_x, mouse_y]);
                     // stroke on the canvas
                     pincel.stroke();
                     // close path
@@ -257,9 +280,25 @@ function onDown(event) {
             break;
         case 5:
             // add coordinates to buffer
-            buffer.push([cx, cy]);
+            buffer.push([mouse_x, mouse_y]);
             // increase mode
             rotation_mode++;
+
+        case 7:
+            // for each object
+            // for each point
+            for (let index = 0; index < objects["Point"].length; index++) {
+                const object = objects["Point"][index];
+                if (object.collision(mouse_x, mouse_y)) {
+                    // set selected object to object
+                    selected_object = object;
+                    break;
+                }
+                
+            }
+            // clear and render again
+            pincel.clearRect(0, 0, canvas.width, canvas.height);
+
     }
 }
 
@@ -270,8 +309,8 @@ function onMove(event) {
         switch(buttonAction) {
             // if the action is translate
             case 4: 
-                var x = event.clientX - pincel.canvas.offsetLeft - cx;
-                var y = event.clientY - pincel.canvas.offsetTop - cy;
+                var x = event.clientX - pincel.canvas.offsetLeft - mouse_x;
+                var y = event.clientY - pincel.canvas.offsetTop - mouse_y;
                 pincel.save();
 
                 var backCanvas = document.createElement('canvas');
@@ -285,8 +324,8 @@ function onMove(event) {
 
                 pincel.drawImage(backCanvas, 0, 0);
                 pincel.restore();
-                cx = event.clientX - pincel.canvas.offsetLeft;
-                cy = event.clientY - pincel.canvas.offsetTop;
+                mouse_x = event.clientX - pincel.canvas.offsetLeft;
+                mouse_y = event.clientY - pincel.canvas.offsetTop;
                 break;
             case 5:
                 // check if the mode ir rotationate
@@ -295,8 +334,8 @@ function onMove(event) {
                     first = buffer[0];
                     second = buffer.pop();
                     // get current coordinate
-                    cx = event.clientX - pincel.canvas.offsetLeft;
-                    cy = event.clientY - pincel.canvas.offsetTop;
+                    mouse_x = event.clientX - pincel.canvas.offsetLeft;
+                    mouse_y = event.clientY - pincel.canvas.offsetTop;
                     pincel.save();
 
                     var backCanvas = document.createElement('canvas');
@@ -306,7 +345,7 @@ function onMove(event) {
                     backCanvasCtx.drawImage(canvas, 0, 0);
 
                     //calcualte agnle
-                    var angle = getAngleOf3Points(first[0], first[1], second[0], second[1], cx, cy);
+                    var angle = getAngleOf3Points(first[0], first[1], second[0], second[1], mouse_x, mouse_y);
 
                     pincel.transform(
                         Math.cos(angle), -Math.sin(angle),
@@ -318,7 +357,7 @@ function onMove(event) {
                     pincel.restore();
 
                     // add the new point to the buffer
-                    buffer.push([cx, cy]);
+                    buffer.push([mouse_x, mouse_y]);
                 }
 
         }
@@ -360,6 +399,7 @@ function resetAction(newaction = -1) {
     drawing_mode = false;
     rotation_mode = 0;
     mousePressed = false;
+    selected_object = null;
     // clear buffer
     buffer = [];
 
@@ -379,9 +419,17 @@ function renderObjects() {
         // for each object of that type
         for (let index = 0; index < objects[key].length; index++) {
             const element = objects[key][index];
-            // render element
-            element.render(pincel);
-            
+            // check if the object is selected
+            if (element == selected_object) {
+                ctx.strokeStyle = "#0000FF";
+                // render element
+                element.render(pincel);
+                ctx.strokeStyle = "#000000";
+             
+            } else {
+                // render element
+                element.render(pincel);
+            }
         }
     }
     
@@ -401,6 +449,8 @@ document.getElementById('button_translate').addEventListener("click", function()
 document.getElementById('button_rotate').addEventListener("click", function() {resetAction(5); } );
 
 document.getElementById('button_scale').addEventListener("click", function() {resetAction(6); } );
+
+document.getElementById('button_select').addEventListener("click", function() {resetAction(7); } );
 
 document.getElementById('button_clear').addEventListener("click", function() {clearCanvas();} );
 
