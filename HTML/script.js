@@ -26,6 +26,12 @@ class Point {
 
 //function to code the point based on another point
 function CodeCoordinate(x, y, xc, yc, tol) {
+    /*
+     * 0 -> above
+     * 1 -> right
+     * 2 -> under
+     * 3 -> left
+    */
     return [y > yc + tol, x > xc + tol, y < yc - tol, x < xc - tol];
 }
 
@@ -34,32 +40,68 @@ class Line {
     constructor(point1, point2) {
         this.point1 = point1;
         this.point2 = point2;
+        this.angular_coefficient = (this.point2[1] -  this.point1[1]) / (this.point2[0] - this.point1[0])
     }
 
     // method to check collision
     collision(x, y, tol = 5) {
+        console.log("----------------------")
+        console.log("mouse: " + x + ' - ' + y)
+        console.log("Top Vertice: " + this.point2[0] + ' - ' + this.point2[1]);
+        // checking points of the line (starting at the vertice)
         var x0 = this.point1[0];
-        var y0 = this.point1[1;]
-        // get code of second point
+        var y0 = this.point1[1];
+        var i = 0;
+        // get code of first and second point
         var code2 = CodeCoordinate(this.point2[0], this.point2[1], x, y, tol);
         var code1 = CodeCoordinate(this.point1[0], this.point1[1], x, y, tol);
         // while there is still bunding box left
+        var code_result = (code1[0] & code2[0]) | (code1[1] & code2[1]) | (code1[2] & code2[2]) | (code1[3] & code2[3]) ;
         while (true) {
             // do the code for the point one
             code1 = CodeCoordinate(x0, y0, x, y, tol);
+            console.log(i + ": ");
+            console.log(code1);
+            console.log(code2);
+            console.log("x0y0: " + x0 + ' - ' + y0);
 
             // calculate code
-            code_result = code1[0] & code1[1] & code1[2] & code1[3] & code2[0] & code2[1] & code2[2] & code2[3] ;
+            code_result = (code1[0] & code2[0]) | (code1[1] & code2[1]) | (code1[2] & code2[2]) | (code1[3] & code2[3]) ;
 
             // check if code result = 0
-            if (code_result == 0) {
+            if (code_result == true) {
                 // return false
                 return false;
             } else {
-                // check code 1
-                if (code[0]) {
-                    // change x0 to the next boder (+ tol distance)
-                    xo += tol;
+                // check code1[0] (or if it is above)
+                if (code1[0]) {
+                    // change x0 to the next border by calculating it using the angular coefficient of the line (using the formula x = y0 + DeltaY/Angular_Coefficient)
+                    x0 += ( (y + tol) - y0)/this.angular_coefficient
+                    // change y0 to the next boder (+ tol distance)
+                    y0 = y + tol;
+                } else if (code1[1]) {
+                    // check code1[1] (or if it is at the right)
+                    // change x0 to the next border by calculating it using the angular coefficient of the line (using the formula y = y0 + DeltaX*Angular_Coefficient)
+                    y0 += ( (x + tol) - x0)*this.angular_coefficient
+                    // change y0 to the next boder (+ tol distance)
+                    x0 = x + tol;
+                } else if (code1[2]) {
+                    // check code1[2] (or if it is under)
+                    // change x0 to the next border by calculating it using the angular coefficient of the line (using the formula y = y0 + DeltaX*Angular_Coefficient)
+                    x0 += ( (y - tol) - y0)/this.angular_coefficient
+                    // change y0 to the next boder (- tol distance)
+                    y0 = y - tol;
+                    
+                } else if (code1[3]) {
+                    // check code1[3] (or if it is at the left)
+                    // change x0 to the next border by calculating it using the angular coefficient of the line (using the formula x = y0 + DeltaY/Angular_Coefficient)
+                    y0 += ( (x - tol) - x0)*this.angular_coefficient
+                    // change y0 to the next boder (- tol distance)
+                    x0 = x - tol;
+                    
+                } else {
+                    // return true
+                    return true
                 }
             }
             
@@ -320,10 +362,22 @@ function onDown(event) {
             rotation_mode++;
 
         case 7:
+            // set selected object to null
+            selected_object = null;
             // for each object
             // for each point
             for (let index = 0; index < objects["Point"].length; index++) {
                 const object = objects["Point"][index];
+                if (object.collision(mouse_x, mouse_y)) {
+                    // set selected object to object
+                    selected_object = object;
+                    break;
+                }
+                
+            }
+            // for each line
+            for (let index = 0; index < objects["Line"].length; index++) {
+                const object = objects["Line"][index];
                 if (object.collision(mouse_x, mouse_y)) {
                     // set selected object to object
                     selected_object = object;
@@ -450,15 +504,14 @@ function clearCanvas() {
 function renderObjects() {
     // get types of objects
     const keys = Object.keys(objects);
+    console.log(selected_object)
+
     // for each type
     for (const key of keys) {
         // for each object of that type
         for (let index = 0; index < objects[key].length; index++) {
             const element = objects[key][index];
             // check if the object is selected
-            console.log(" " + index + ": ")
-            console.log(selected_object)
-            console.log(element)
             if (element == selected_object) {
                 pincel.strokeStyle = "#0000FF";
                 pincel.fillStyle = "#0000FF";
