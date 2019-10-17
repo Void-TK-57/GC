@@ -18,10 +18,15 @@ class Point {
     }
 
     // funtion which indicates with the point was selected by a tolrence t
-    collision(x, y, t = 5) {
-        return (this.coordinates[0] < x + t) && (this.coordinates[0] > x - t) && (this.coordinates[1] < y + t) && (this.coordinates[1] > y - t);
+    collision(x, y, tol = 5) {
+        return (this.coordinates[0] < x + tol) && (this.coordinates[0] > x - tol) && (this.coordinates[1] < y + tol) && (this.coordinates[1] > y - tol);
     }
     
+}
+
+//function to code the point based on another point
+function CodeCoordinate(x, y, xc, yc, tol) {
+    return [y > yc + tol, x > xc + tol, y < yc - tol, x < xc - tol];
 }
 
 class Line {
@@ -29,6 +34,36 @@ class Line {
     constructor(point1, point2) {
         this.point1 = point1;
         this.point2 = point2;
+    }
+
+    // method to check collision
+    collision(x, y, tol = 5) {
+        var x0 = this.point1[0];
+        var y0 = this.point1[1;]
+        // get code of second point
+        var code2 = CodeCoordinate(this.point2[0], this.point2[1], x, y, tol);
+        var code1 = CodeCoordinate(this.point1[0], this.point1[1], x, y, tol);
+        // while there is still bunding box left
+        while (true) {
+            // do the code for the point one
+            code1 = CodeCoordinate(x0, y0, x, y, tol);
+
+            // calculate code
+            code_result = code1[0] & code1[1] & code1[2] & code1[3] & code2[0] & code2[1] & code2[2] & code2[3] ;
+
+            // check if code result = 0
+            if (code_result == 0) {
+                // return false
+                return false;
+            } else {
+                // check code 1
+                if (code[0]) {
+                    // change x0 to the next boder (+ tol distance)
+                    xo += tol;
+                }
+            }
+            
+        }
     }
 
     // method to render 
@@ -298,6 +333,7 @@ function onDown(event) {
             }
             // clear and render again
             pincel.clearRect(0, 0, canvas.width, canvas.height);
+            renderObjects();
 
     }
 }
@@ -420,11 +456,16 @@ function renderObjects() {
         for (let index = 0; index < objects[key].length; index++) {
             const element = objects[key][index];
             // check if the object is selected
+            console.log(" " + index + ": ")
+            console.log(selected_object)
+            console.log(element)
             if (element == selected_object) {
-                ctx.strokeStyle = "#0000FF";
+                pincel.strokeStyle = "#0000FF";
+                pincel.fillStyle = "#0000FF";
                 // render element
                 element.render(pincel);
-                ctx.strokeStyle = "#000000";
+                pincel.strokeStyle = "#000000";
+                pincel.fillStyle = "#000000";
              
             } else {
                 // render element
