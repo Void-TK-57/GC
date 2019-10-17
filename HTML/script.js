@@ -45,9 +45,6 @@ class Line {
 
     // method to check collision
     collision(x, y, tol = 5) {
-        console.log("----------------------")
-        console.log("mouse: " + x + ' - ' + y)
-        console.log("Top Vertice: " + this.point2[0] + ' - ' + this.point2[1]);
         // checking points of the line (starting at the vertice)
         var x0 = this.point1[0];
         var y0 = this.point1[1];
@@ -60,11 +57,6 @@ class Line {
         while (true) {
             // do the code for the point one
             code1 = CodeCoordinate(x0, y0, x, y, tol);
-            console.log(i + ": ");
-            console.log(code1);
-            console.log(code2);
-            console.log("x0y0: " + x0 + ' - ' + y0);
-
             // calculate code
             code_result = (code1[0] & code2[0]) | (code1[1] & code2[1]) | (code1[2] & code2[2]) | (code1[3] & code2[3]) ;
 
@@ -141,6 +133,11 @@ class Circle {
         pincel.closePath();
     }
 
+    collision(x, y) {
+        // not implemented yet, so return false
+        return false;
+    }
+
 }
 
 class Polygon {
@@ -161,6 +158,7 @@ class Polygon {
         // coordinate and next coordinate for each line (aka first and second point)
         var coordinate = 0;
         var next_coordinate = 0;
+        var line;
         // for each coordinate
         for (let index = 0; index < coordinates.length;) {
             coordinate = coordinates[index++];
@@ -182,7 +180,82 @@ class Polygon {
             line.render(pincel);
         }
     }
-}
+
+    // method to collision 
+    collision(x, y) {
+        // number of lines intersection
+        var number_intersection = 0;
+        // for each line
+        for (let index = 0; index < this.coordinates.length; index++) {
+            const line = this.coordinates[index];
+            // check if the line is not totally above or under or left, or is horizontal
+            if ( !  (  (line.point1[0] < x && line.point2[0] < x) || (line.point1[1] > y && line.point2[1] > y) || ( line.point1[1] < y && line.point2[1] < y) || ( line.point1[1] == line.point2[1]) ) ) {
+                // check if the line created at point to the right conflict at vertice of a polygon line
+                // if so, consider only the one pointed up (to not count the conflict twice)
+                if (line.point1[1] == y) {
+                    // check if the x of the point is on the right (conflict with the line which is only apointed to right)
+                    // and the y of second point is highter (so the line is indeed pointed up)
+                    if (line.point1[0] > x && line.point2[1] > y ) {
+                        // then the line is intersected, so increase number of intersection
+                        number_intersection++;
+                    }
+
+                } else {
+                    // then also check if the previous case is repeated to the second point
+                    if ( line.point2[1] == y) {
+                        if (line.point2[0] > x && line.point1[1] > y ) {
+                            number_intersection++;
+                        }
+                    } else {
+                        /* then the last case is when one of the vertices is above and the other is under
+                         * and this last case can be divided in 2 types:
+                         *   - both vertices are on the right (which means inevitably thre is intersection)
+                         *   - one of the vertices is behind the point (which can or cannot have a intersection)
+                         *
+                         */
+                        // check if is the first case (both vertices are on the right, and one is above and the order under)
+                        if ( (line.point1[0] > x) && (line.point2[0] > x) ) {
+                            // then there is inevitably a intersection, so increase the number of intesercion
+                            number_intersection++;
+                        } else {
+                            /* then this is the latter case, which can or cannot  be intersected by the imaginary line of the point
+                             * to check if it tis intersected, check the point of the intersected (by calculating the x of the line at the y of the click)
+                             * and compare if the x of the line is behind or after the x of the click
+                             * if the x of the intersection is behind (then the line itself is behind so no intersection )
+                             * else, if the x of the intersection is after (then the line itself is after so no intersection )
+                             */
+
+                            // calculate the x of the line at the y of the click
+                            // using the formula: x = x0 + DeltaY/angular_coeeficient
+                            // which the DeltaY = y - y0 (y is the y of the line which is also the y of the click)
+                            var x_line = line.point1[0] + (y - line.point1[1]) / line.angular_coefficient
+                            // then at last, check if the x of the line last is after the x of the click (which means the line is also after, so increase the numver of intersection)
+                            if (x_line > x) {
+                                number_intersection++;
+                            } 
+
+                        } // end of the if else: case of one vertice is under and the other is above
+
+                    } // end of the if: check if the line of the click is at a vertice
+                }
+            }  // end of the if: not trivial cases
+            
+        } // end of the for loop: for each line of the poligon
+        // check if the number of intersection is odd
+        if (number_intersection % 2 == 1) {
+            /* then return true (the click was indeed inside of the polygon, because the number of intersection is odd,
+             * or in other words, the imaginary line coming from the click entering the ploygon is not equal to the line leaving,
+             * which is only possible if the point is inside the polygon) so return true
+              */
+            return true;
+        }
+        
+        // else, the number is even, so the click was outside the polygon, and hence return false
+        return false;
+
+    } // end of the colision function
+
+} //end of the polygon class
 
 //get canvas and pincel
 var canvas = document.getElementById('canvas');
@@ -364,27 +437,27 @@ function onDown(event) {
         case 7:
             // set selected object to null
             selected_object = null;
-            // for each object
-            // for each point
-            for (let index = 0; index < objects["Point"].length; index++) {
-                const object = objects["Point"][index];
-                if (object.collision(mouse_x, mouse_y)) {
-                    // set selected object to object
-                    selected_object = object;
-                    break;
-                }
-                
+
+            // get types of objects
+            const keys = Object.keys(objects);
+    
+
+            // for each type of object
+            key_loop:
+            for (const key of keys) {
+                // for each object of that type
+                object_loop:
+                for (let index = 0; index < objects[key].length; index++) {
+                    const object = objects[key][index];
+                    // check if there was a collision
+                    if (object.collision(mouse_x, mouse_y)) {
+                        // set selected object to object
+                        selected_object = object;
+                        // break outer loop, because the object was already selected
+                        break key_loop;
+                    }
             }
-            // for each line
-            for (let index = 0; index < objects["Line"].length; index++) {
-                const object = objects["Line"][index];
-                if (object.collision(mouse_x, mouse_y)) {
-                    // set selected object to object
-                    selected_object = object;
-                    break;
-                }
-                
-            }
+}
             // clear and render again
             pincel.clearRect(0, 0, canvas.width, canvas.height);
             renderObjects();
