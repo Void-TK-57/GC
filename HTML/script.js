@@ -1,3 +1,146 @@
+// class to represent a Rotation
+class Rotation {
+
+    constructor(angle) {
+        this.angle = angle;
+    }
+
+    // method to create the matrix rotation
+    matrix() {
+        return [[math.cos(this.angle), -math.sin(this.angle), 0],
+                [ math.sin(this.angle), math.cos(this.angle), 0],
+                [        0       ,        0       , 1]];
+    }
+}
+
+// class to represent a Scale
+class Scale {
+
+    constructor(sx, sy) {
+        this.sx = sx;
+        this.sy = sy;
+    }
+
+    // method to create the matrix rotation
+    matrix() {
+        return [[ this.sx,    0   ,  0],
+                [    0   , this.sy,  0],
+                [    0   ,    0   ,  1]];
+    }
+}
+
+// class to represent a Scale
+class Translate {
+
+    constructor(tx, ty) {
+        this.tx = tx;
+        this.ty = ty;
+    }
+
+    // method to create the matrix rotation
+    matrix() {
+        return [[ 1,  0, this.tx],
+                [ 0 , 1, this.ty],
+                [ 0 , 0,    1   ]];
+    }
+}
+
+// convert to homogen
+function homogen(matrix) {
+    // new dimension
+    new_dimension = [];
+    for (let index = 0; index < matrix[0].length; index++) {
+        new_dimension.push(1);
+    }
+    // add new dimension to matrix
+    matrix.push(new_dimension);
+    // return matrix
+    return matrix;
+}
+
+// convert to normal
+function dehomogen(matrix) {
+    // eliminate last element
+    matrix.pop()
+    // return the matrix
+    return matrix;
+}
+
+// generate matrix with default value
+function create_matrix(y, x, value = 0) {
+    var matrix = [];
+    var row = [];
+    for (let y_index = 0; y_index < y; y_index++) {
+        row = [];
+        for (let x_index = 0; x_index < x; x_index++) {
+            row.push(value);
+        }
+        // push to the matrix
+        matrix.push(row);
+    }
+    // return matrix
+    return matrix;
+}
+
+// matrix multiplication
+function dot(matrix1, matrix2) {
+    console.log("Matrix1:");
+    console.log(matrix1);
+    console.log("Matrix 2:");
+    console.log(matrix2);
+    // check shape of matrix 1 and 2
+    if ( matrix1[0].length == matrix2.length) {
+        // create matrix 
+        var matrix = create_matrix(matrix1.length, matrix2[0].length );
+        console.log("Matrix:");
+        console.log(matrix);
+        // apply the dot algorithm
+        for (let i = 0; i < matrix1.length; i++) {
+            for (let j = 0; j < matrix2[0].length; j++) {
+                var sum = 0;
+                for (let k = 0; k < matrix2.length; k++) {
+                    sum += matrix1[i][k]*matrix2[k][j];
+                }
+                matrix[i][j] = sum;
+            }
+        }
+        return matrix;
+    }
+}
+
+// copy matrix
+function copy_matrix(matrix) {
+    var copy = [];
+    var row = [];
+    for (let i = 0; i < matrix.length; i++) {
+        row = [];
+        for (let j = 0; j < matrix[i].length; j++) {
+            row.push(matrix[i][j]);
+        }
+        copy.push(row);
+    }
+    return copy;
+}
+
+// pipeline function
+function pipeline(transformations, original_matrix) {
+    // copy matrix
+    var matrix = copy_matrix(original_matrix);
+    // convert to homogen coordinates
+    matrix = homogen(matrix);
+    // for each transformation in transformations
+    for (let index = 0; index < transformations.length; index++) {
+        // get transformtion
+        transformation_matrix = transformations[index];
+        // multiply by transformation
+        matrix = dot(transformation_matrix.matrix(), matrix);
+    }
+    // dehomogen
+    matrix = dehomogen(matrix);
+    // return matrix
+    return matrix;
+}
+
 //main object classes
 class Point {
 
@@ -20,6 +163,18 @@ class Point {
     // funtion which indicates with the point was selected by a tolrence t
     collision(x, y, tol = 5) {
         return (this.coordinates[0] < x + tol) && (this.coordinates[0] > x - tol) && (this.coordinates[1] < y + tol) && (this.coordinates[1] > y - tol);
+    }
+
+    // transform method
+    transform(transformations) {
+        console.log("==============");
+        // get matrix of coordinates
+        var matrix = [ [ this.coordinates[0], ] , [ this.coordinates[1], ] ] ;
+        // transform
+        matrix = pipeline(transformations, matrix);
+        console.log(matrix);
+        // change coordinates
+        this.coordinates = [ matrix[0][0] , matrix[0][1] ];
     }
     
 }
@@ -440,7 +595,6 @@ function onDown(event) {
 
             // get types of objects
             const keys = Object.keys(objects);
-    
 
             // for each type of object
             key_loop:
@@ -471,9 +625,16 @@ function onMove(event) {
         // check action
         switch(buttonAction) {
             // if the action is translate
-            case 4: 
-                var x = event.clientX - pincel.canvas.offsetLeft - mouse_x;
-                var y = event.clientY - pincel.canvas.offsetTop - mouse_y;
+            case 4:
+                //dx and dy
+                var dx = event.clientX - pincel.canvas.offsetLeft - mouse_x;
+                var dy = event.clientY - pincel.canvas.offsetTop - mouse_y;
+                // if the selected object is not null
+                if (selected_object != null) {
+                    // transform the object
+                    selected_object.transform([ new Translate(dx, dy) ,])
+                }
+                /*
                 pincel.save();
 
                 var backCanvas = document.createElement('canvas');
@@ -487,6 +648,7 @@ function onMove(event) {
 
                 pincel.drawImage(backCanvas, 0, 0);
                 pincel.restore();
+                */
                 mouse_x = event.clientX - pincel.canvas.offsetLeft;
                 mouse_y = event.clientY - pincel.canvas.offsetTop;
                 break;
@@ -524,7 +686,10 @@ function onMove(event) {
                 }
 
         }
-    }
+        // re render objects
+        pincel.clearRect(0, 0, canvas.width, canvas.height);
+        renderObjects();
+    } // end if
 }
 
 function onUp(event) {
@@ -562,7 +727,6 @@ function resetAction(newaction = -1) {
     drawing_mode = false;
     rotation_mode = 0;
     mousePressed = false;
-    selected_object = null;
     // clear buffer
     buffer = [];
 
@@ -577,8 +741,7 @@ function clearCanvas() {
 function renderObjects() {
     // get types of objects
     const keys = Object.keys(objects);
-    console.log(selected_object)
-
+    
     // for each type
     for (const key of keys) {
         // for each object of that type
