@@ -175,6 +175,10 @@ class Point {
         // change coordinates
         this.coordinates = [ matrix[0][0] , matrix[1][0] ];
     }
+
+    getCenter() {
+        return this.coordinates;
+    }
     
 }
 
@@ -251,7 +255,11 @@ class Line {
                 }
             }
             
-        }
+        } // end while
+    } // end function
+
+    getCenter() {
+        return [ (this.point1[0] + this.point2[0])/2, (this.point1[1] + this.point2[1])/2 ];
     }
 
     // method to render 
@@ -320,6 +328,10 @@ class Circle {
         console.log(matrix);
         // change coordinates
         this.coordinates = [ matrix[0][0] , matrix[1][0] ];
+    }
+
+    getCenter() {
+        return this.coordinates;
     }
 
 }
@@ -447,6 +459,22 @@ class Polygon {
         return false;
 
     } // end of the colision function
+
+    getCenter() {
+        // sum of x, y, and total of x,y
+        var x = 0;
+        var y = 0;
+        var i = 0;
+        for (var index = 0; index < this.coordinates.length; index++) {
+            // icrease i
+            i++;
+            // increase x and y (use only point1 to no repeat any point)
+            x += this.coordinates[index].point1[0];
+            y += this.coordinates[index].point1[1];
+        }
+        return [ x/i, y/i ];
+    }
+
 
 } //end of the polygon class
 
