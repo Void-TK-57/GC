@@ -384,6 +384,7 @@ class Polygon {
             const line = this.coordinates[index];
             line.render(pincel);
         }
+        
     }
 
     // method to collision 
@@ -677,9 +678,10 @@ function onMove(event) {
         switch(buttonAction) {
             // if the action is translate
             case 4:
-                //dx and dy
+                //dx and dy of translation (x = dX)
                 var dx = event.clientX - pincel.canvas.offsetLeft - mouse_x;
                 var dy = event.clientY - pincel.canvas.offsetTop - mouse_y;
+               
                 // if the selected object is not null
                 if (selected_object != null) {
                     // transform the object
@@ -689,21 +691,24 @@ function onMove(event) {
                 pincel.clearRect(0, 0, canvas.width, canvas.height);
                 renderObjects();
 
-                /*
-                pincel.save();
-
-                var backCanvas = document.createElement('canvas');
-                backCanvas.width = canvas.width;
-                backCanvas.height  = canvas.height;
-                var backCanvasCtx = backCanvas.getContext('2d');
-                backCanvasCtx.drawImage(canvas, 0, 0);
-
-                pincel.transform(1, 0, 0, 1, x, y);
+                mouse_x = event.clientX - pincel.canvas.offsetLeft;
+                mouse_y = event.clientY - pincel.canvas.offsetTop;
+                break;
+            case 6:
+                //dx and dy of scale( x = dx'/dx)
+                var dx = (event.clientX - pincel.canvas.offsetLeft)/mouse_x;
+                var dy = mouse_y/(event.clientY - pincel.canvas.offsetTop );
+                // if the selected object is not null
+                if (selected_object != null) {
+                    // get object center points
+                    var center = selected_object.getCenter();
+                    // transform the object (by moving - center units of distance, then scale, then moving + center units of distance again. aka. scale based on is center)
+                    selected_object.transform([ new Translate(-center[0], -center[1]) , new Scale(dx, dy), new Translate(center[0], center[1]) ] )
+                }
+                // clear canvas and redraw objects
                 pincel.clearRect(0, 0, canvas.width, canvas.height);
+                renderObjects();
 
-                pincel.drawImage(backCanvas, 0, 0);
-                pincel.restore();
-                */
                 mouse_x = event.clientX - pincel.canvas.offsetLeft;
                 mouse_y = event.clientY - pincel.canvas.offsetTop;
                 break;
