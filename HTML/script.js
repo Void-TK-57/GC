@@ -84,16 +84,16 @@ function create_matrix(y, x, value = 0) {
 
 // matrix multiplication
 function dot(matrix1, matrix2) {
-    console.log("Matrix1:");
-    console.log(matrix1);
-    console.log("Matrix 2:");
-    console.log(matrix2);
+    // console.log("Matrix1:");
+    // console.log(matrix1);
+    // console.log("Matrix 2:");
+    // console.log(matrix2);
     // check shape of matrix 1 and 2
     if ( matrix1[0].length == matrix2.length) {
         // create matrix 
         var matrix = create_matrix(matrix1.length, matrix2[0].length );
-        console.log("Matrix:");
-        console.log(matrix);
+        // console.log("Matrix:");
+        // console.log(matrix);
         // apply the dot algorithm
         for (let i = 0; i < matrix1.length; i++) {
             for (let j = 0; j < matrix2[0].length; j++) {
@@ -167,14 +167,13 @@ class Point {
 
     // transform method
     transform(transformations) {
-        console.log("==============");
         // get matrix of coordinates
         var matrix = [ [ this.coordinates[0], ] , [ this.coordinates[1], ] ] ;
         // transform
         matrix = pipeline(transformations, matrix);
         console.log(matrix);
         // change coordinates
-        this.coordinates = [ matrix[0][0] , matrix[0][1] ];
+        this.coordinates = [ matrix[0][0] , matrix[1][0] ];
     }
     
 }
@@ -195,7 +194,7 @@ class Line {
     constructor(point1, point2) {
         this.point1 = point1;
         this.point2 = point2;
-        this.angular_coefficient = (this.point2[1] -  this.point1[1]) / (this.point2[0] - this.point1[0])
+        this.angular_coefficient = this.calculate_angular_coefficient();
     }
 
     // method to check collision
@@ -268,6 +267,24 @@ class Line {
         // close path
         pincel.closePath();
     }
+
+    // transform method
+    transform(transformations) {
+        console.log("==========================");
+        // get matrix of coordinates
+        var matrix = [ [ this.point1[0], this.point2[0]] , [ this.point1[1], this.point2[1] ] ] ;
+        // transform
+        matrix = pipeline(transformations, matrix);
+        console.log(matrix);
+        // change coordinates
+        this.point1 = [matrix[0][0], matrix[1][0] ];
+        this.point2 = [matrix[0][1], matrix[1][1] ];
+    }
+
+    // function to get angular coefficient
+    calculate_angular_coefficient() {
+        return (this.point2[1] -  this.point1[1]) / (this.point2[0] - this.point1[0]);
+    }
 }
 
 class Circle {
@@ -289,8 +306,20 @@ class Circle {
     }
 
     collision(x, y) {
-        // not implemented yet, so return false
-        return false;
+        // check if the distance to the center is lower than the radius
+        var distance = getDistance(x, this.coordinates[0], y, this.coordinates[1]);
+        return distance <= this.radius;
+    }
+
+    // transform method
+    transform(transformations) {
+        // get matrix of coordinates
+        var matrix = [ [ this.coordinates[0], ] , [ this.coordinates[1], ] ] ;
+        // transform
+        matrix = pipeline(transformations, matrix);
+        console.log(matrix);
+        // change coordinates
+        this.coordinates = [ matrix[0][0] , matrix[1][0] ];
     }
 
 }
@@ -316,8 +345,8 @@ class Polygon {
         var line;
         // for each coordinate
         for (let index = 0; index < coordinates.length;) {
-            coordinate = coordinates[index++];
-            next_coordinate = copy[index];
+            coordinate = coordinates[index++].slice();
+            next_coordinate = copy[index].slice();
             // create a Line
             line = new Line(coordinate, next_coordinate);
             // push it to the new coordinates
@@ -325,6 +354,15 @@ class Polygon {
         }
         // return the new coordinates
         return new_coordinates;
+    }
+
+    // transform method
+    transform(transformations) {
+        // apply transformation for each line
+        for (let index = 0; index < this.coordinates.length; index++) {
+            // apply transformation
+            this.coordinates[index].transform(transformations);
+        }
     }
 
     // method to render 
@@ -534,54 +572,38 @@ function onDown(event) {
         case 3:
             // check if a drawing was already started
             if (!drawing_mode) {
-                // start path
-                pincel.beginPath();
                 // add current coordinates to the buffer
                 buffer.push([mouse_x, mouse_y]);
                 // set drawing mode to true
                 drawing_mode = true;
                 
             } else {
-                // else, then a starting point for the line was already calculated and stored, so get them on the buffer
-                coordinates = buffer.pop();
-                // add it again to the buffer
-                buffer.push(coordinates);
-                // move pincel to that coordinates
-                pincel.moveTo(coordinates[0], coordinates[1]);
                 // check if the coordinates is close to the first coordinates
                 if ( (Math.abs(buffer[0][0] - mouse_x) <= 4) && (Math.abs(buffer[0][1] - mouse_y) <= 4) ) {
-                    // then create a line to the current coordinates calculated
-                    pincel.lineTo(buffer[0][0], buffer[0][1]);
-                    // stroke on the canvas
-                    pincel.stroke();
-                    // close path
-                    pincel.closePath();
-
                     // create line object
                     polygon = new Polygon( buffer.slice() );
-
                     // add to objects
                     objects["Polygon"].push(polygon);
-
+                    // redraw
+                    pincel.clearRect(0, 0, canvas.width, canvas.height);
+                    renderObjects();
                     // clear buffer
                     buffer = [];
-                
                     // for last, set drawing mode to false again
                     drawing_mode = false;
 
                 } else {
-                    // then create a line to the current coordinates calculated
-                    pincel.lineTo(mouse_x, mouse_y);
                     // push mouse_x and mouse_y to buffer
                     buffer.push([mouse_x, mouse_y]);
-                    // stroke on the canvas
-                    pincel.stroke();
-                    // close path
-                    pincel.closePath();
-                    // begin new path
-                    pincel.beginPath();
+                    // reset canvas
+                    pincel.clearRect(0, 0, canvas.width, canvas.height);
+                    renderObjects();
+                    // render the buffer
+                    renderBuffer();
                 }
             }
+            console.log("Buffer");
+            console.log(buffer);
             break;
         case 5:
             // add coordinates to buffer
@@ -609,15 +631,16 @@ function onDown(event) {
                         selected_object = object;
                         // break outer loop, because the object was already selected
                         break key_loop;
-                    }
-            }
-}
+                    } // end if
+                }// end inner loop
+            }// end outer loop
+
             // clear and render again
             pincel.clearRect(0, 0, canvas.width, canvas.height);
             renderObjects();
 
-    }
-}
+    } // end switch
+} // end  function
 
 function onMove(event) {
     // check if the mouse is pressed
@@ -634,6 +657,10 @@ function onMove(event) {
                     // transform the object
                     selected_object.transform([ new Translate(dx, dy) ,])
                 }
+                // clear canvas and redraw objects
+                pincel.clearRect(0, 0, canvas.width, canvas.height);
+                renderObjects();
+
                 /*
                 pincel.save();
 
@@ -686,9 +713,6 @@ function onMove(event) {
                 }
 
         }
-        // re render objects
-        pincel.clearRect(0, 0, canvas.width, canvas.height);
-        renderObjects();
     } // end if
 }
 
@@ -704,6 +728,28 @@ function onUp(event) {
                 rotation_mode = 0;
             }
     }
+}
+
+// function to render the buffer
+function renderBuffer() {
+    // get last element
+    var coordinates = buffer[buffer.length-1];
+    var other_coordinates = coordinates;
+    // for each other cooridnate
+    for (var i = buffer.length - 2; i >= 0; i--) {
+        other_coordinates = buffer[i];
+        // start path
+        pincel.beginPath();
+        // move to other coordinate
+        pincel.moveTo(other_coordinates[0], other_coordinates[1]);
+        // line to coordinate
+        pincel.lineTo(coordinates[0], coordinates[1]);
+        pincel.stroke();
+        pincel.closePath();
+        // change coordinates to the next point
+        coordinates = other_coordinates
+    }
+    
 }
 
 // function to get the distance between 2 points
