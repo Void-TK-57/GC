@@ -7,8 +7,8 @@ class Rotation {
 
     // method to create the matrix rotation
     matrix() {
-        return [[math.cos(this.angle), -math.sin(this.angle), 0],
-                [ math.sin(this.angle), math.cos(this.angle), 0],
+        return [[Math.cos(this.angle), -Math.sin(this.angle), 0],
+                [ Math.sin(this.angle), Math.cos(this.angle), 0],
                 [        0       ,        0       , 1]];
     }
 }
@@ -515,6 +515,9 @@ var selected_object = null;
 var mouse_x = 0;
 var mouse_y = 0;
 
+// center of the selcted object
+var center_selected_object = [0, 0];
+
 // function to be callend when the event of clicking the mouse is triggered
 function onDown(event) {
     // get the relative position x and y of the mouse on the drawing canvas
@@ -634,11 +637,33 @@ function onDown(event) {
             console.log("Buffer");
             console.log(buffer);
             break;
+
+        case 4:
+            // if the selected object is not null
+            if (selected_object == null) {
+                alert("Select an Object first");
+            }
+            break;
+
         case 5:
-            // add coordinates to buffer
-            buffer.push([mouse_x, mouse_y]);
-            // increase mode
-            rotation_mode++;
+            // if the selected object is not null
+            if (selected_object != null) {
+                // get object center points
+                center_selected_object = selected_object.getCenter();
+            } else {
+                alert("Select an Object first");
+            }
+            break;
+
+        case 6:
+            // if the selected object is not null
+            if (selected_object != null) {
+                // get object center points
+                center_selected_object = selected_object.getCenter();
+            } else {
+                alert("Select an Object first");
+            }
+            break;
 
         case 7:
             // set selected object to null
@@ -695,15 +720,25 @@ function onMove(event) {
                 mouse_y = event.clientY - pincel.canvas.offsetTop;
                 break;
             case 6:
-                //dx and dy of scale( x = dx'/dx)
-                var dx = (event.clientX - pincel.canvas.offsetLeft)/mouse_x;
-                var dy = mouse_y/(event.clientY - pincel.canvas.offsetTop );
                 // if the selected object is not null
                 if (selected_object != null) {
                     // get object center points
                     var center = selected_object.getCenter();
+                    // check denominator
+                    var denominator_x = (mouse_x-center[0]);
+                    if (denominator_x == 0) {
+                        denominator_x = 0.001;
+                    }
+                    var denominator_y = (mouse_y-center[1]);
+                    if (denominator_y == 0) {
+                        denominator_y = 0.001;
+                    }
+                    //dx and dy of scale( x = dx'/dx)
+                    var dx = (event.clientX - pincel.canvas.offsetLeft - center[0])/denominator_x;
+                    var dy = (event.clientY - pincel.canvas.offsetTop - center[1])/denominator_y;
+                    
                     // transform the object (by moving - center units of distance, then scale, then moving + center units of distance again. aka. scale based on is center)
-                    selected_object.transform([ new Translate(-center[0], -center[1]) , new Scale(dx, dy), new Translate(center[0], center[1]) ] )
+                    selected_object.transform([ new Translate(-center_selected_object[0], -center_selected_object[1]) , new Scale(dx, dy), new Translate(center_selected_object[0], center_selected_object[1]) ] );
                 }
                 // clear canvas and redraw objects
                 pincel.clearRect(0, 0, canvas.width, canvas.height);
@@ -713,54 +748,25 @@ function onMove(event) {
                 mouse_y = event.clientY - pincel.canvas.offsetTop;
                 break;
             case 5:
-                // check if the mode ir rotationate
-                if (rotation_mode == 2) {
-                    // get second and first coordinates
-                    first = buffer[0];
-                    second = buffer.pop();
-                    // get current coordinate
-                    mouse_x = event.clientX - pincel.canvas.offsetLeft;
-                    mouse_y = event.clientY - pincel.canvas.offsetTop;
-                    pincel.save();
-
-                    var backCanvas = document.createElement('canvas');
-                    backCanvas.width = canvas.width;
-                    backCanvas.height  = canvas.height;
-                    var backCanvasCtx = backCanvas.getContext('2d');
-                    backCanvasCtx.drawImage(canvas, 0, 0);
-
-                    //calcualte agnle
-                    var angle = getAngleOf3Points(first[0], first[1], second[0], second[1], mouse_x, mouse_y);
-
-                    pincel.transform(
-                        Math.cos(angle), -Math.sin(angle),
-                        Math.sin(angle),  Math.cos(angle),
-                                0      ,         0       );
-                    pincel.clearRect(0, 0, canvas.width, canvas.height);
-
-                    pincel.drawImage(backCanvas, 0, 0);
-                    pincel.restore();
-
-                    // add the new point to the buffer
-                    buffer.push([mouse_x, mouse_y]);
+                // if the selected object is not null
+                if (selected_object != null) {
+                    var d_angle = getAngleOf3Points(center_selected_object[0], center_selected_object[1], mouse_x, mouse_y, event.clientX - pincel.canvas.offsetLeft, event.clientY - pincel.canvas.offsetTop);
+                    // transform the object (by moving - center units of distance, then scale, then moving + center units of distance again. aka. scale based on is center)
+                    selected_object.transform([ new Translate(-center_selected_object[0], -center_selected_object[1]) , new Rotation(d_angle), new Translate(center_selected_object[0], center_selected_object[1]) ] );
                 }
+                // clear canvas and redraw objects
+                pincel.clearRect(0, 0, canvas.width, canvas.height);
+                renderObjects();
 
+                mouse_x = event.clientX - pincel.canvas.offsetLeft;
+                mouse_y = event.clientY - pincel.canvas.offsetTop;
+                break;
         }
     } // end if
 }
 
 function onUp(event) {
     mousePressed = false;
-    // check action
-    switch(buttonAction) {
-
-        case 5:
-            //check if the mode is to ratationate
-            if (rotation_mode == 2) {
-                // then set the mode to select the orgigin points again
-                rotation_mode = 0;
-            }
-    }
 }
 
 // function to render the buffer
@@ -794,10 +800,24 @@ function getDistance(x1, x2, y1, y2) {
 function getAngleOf3Points(x1, y1, x2, y2, x3, y3) {
     // get the distance of the line
     var d12 = getDistance(x1, y1, x2, y2);
+    var P12 = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
+    var P13 = (x1-x3)*(x1-x3) + (y1-y3)*(y1-y3);
+    var P23 = (x3-x2)*(x3-x2) + (y3-y2)*(y3-y2);
     var d13 = getDistance(x1, y1, x3, y3);
     var d23 = getDistance(x2, y2, x3, y3);
+    // denominator
+    var denominator = (2*d12*d13);
+    var denominator = (2*Math.sqrt(P12*P13));
+    // change is it is 0 (cant be 0)
+    if (denominator == 0) {
+        // then there is no angle
+        return 0;
+    }
+    var angle = Math.acos( (P12 + P13 - P23) / denominator );
+    console.log("Angle");
+    console.log(angle);
     // apply cossine law and return the result
-    return Math.acos( ( d12*d12 + d23*d23 - d23*d23) / (2*d12*d13) );
+    return angle;
 }
 
 // function to reset action
