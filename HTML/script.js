@@ -798,32 +798,14 @@ function getDistance(x1, x2, y1, y2) {
 
 // function to get the angle formed by 3 points (as 2 latter points connect to the first point)
 function getAngleOf3Points(x1, y1, x2, y2, x3, y3) {
-    // get the distance of the line
-    var d12 = getDistance(x1, y1, x2, y2);
-    var P12 = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
-    var P13 = (x1-x3)*(x1-x3) + (y1-y3)*(y1-y3);
-    var P23 = (x3-x2)*(x3-x2) + (y3-y2)*(y3-y2);
-    var d13 = getDistance(x1, y1, x3, y3);
-    var d23 = getDistance(x2, y2, x3, y3);
-    // denominator
-    var denominator = (2*d12*d13);
-    var denominator = (2*Math.sqrt(P12*P13));
-    // change is it is 0 (cant be 0)
-    if (denominator == 0) {
-        // then there is no angle
+    // check if the has a angle
+    if ( ( (x1 == x2) && (y1 == y2) ) || ( (x1 == x3) || (y1 == y3) ) ) {
         return 0;
     }
-    var angle = Math.acos( (P12 + P13 - P23) / denominator );
-    // coefficient that indictates oritentation of the angle
-    var coef = 1;
-    // coefficiente os adjust
-    if ( (x2 > x3) || (y2 > y3) ) {
-        coef = -1
-    }
-    console.log("Angle");
-    console.log(angle);
-    // apply cossine law and return the result
-    return coef*angle;
+    // get angle as the diference of the angle of the two line to the x axis
+    var angle  = Math.atan2(y3 - y1, x3 - x1) - Math.atan2(y2 - y1, x2 - x1)
+    // return angle
+    return angle;
 }
 
 // function to reset action
