@@ -814,10 +814,16 @@ function getAngleOf3Points(x1, y1, x2, y2, x3, y3) {
         return 0;
     }
     var angle = Math.acos( (P12 + P13 - P23) / denominator );
+    // coefficient that indictates oritentation of the angle
+    var coef = 1;
+    // coefficiente os adjust
+    if ( (x2 > x3) || (y2 > y3) ) {
+        coef = -1
+    }
     console.log("Angle");
     console.log(angle);
     // apply cossine law and return the result
-    return angle;
+    return coef*angle;
 }
 
 // function to reset action
