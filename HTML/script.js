@@ -228,7 +228,7 @@ class Matrix {
 }
 
 
-
+// triangle class
 class Triangle {
     constructor(p1, p2, p3) {
         this.p1 = p1;
@@ -605,6 +605,7 @@ class Circle {
 
 }
 
+// polygon class
 class Polygon {
 
     constructor(coordinates) {
@@ -748,6 +749,64 @@ class Polygon {
 
 } //end of the polygon class
 
+
+// Cloud of Points class
+class Cloud {
+    constructor(points, radius, center) {
+        this.points = points;
+        this.radius = radius;
+        this.center = center;
+    }
+
+    // method to render 
+    render(pincel) {
+        // for each point in the cloud, call its render function
+        for (let point = 0; point < this.points.length; point++) {
+            this.points[point].render(pincel);
+        }
+    }
+
+    collision(x, y) {
+        // check if the distance to the center is lower than the radius
+        var distance = getDistance(x, this.center[0], y, this.center[1]);
+        return distance <= this.radius;
+    }
+
+    // transform method
+    transform(transformations) {
+        // apply transformation for each point in the cloud
+        for (let index = 0; index < this.points.length; index++) {
+            // apply transformation
+            this.points[index].transform(transformations);
+        }
+    }
+
+    getCenter() {
+        return this.center.slice();
+    }
+}
+
+// function to create a random clound of points
+function random_cloud(center, radius, number_of_points) {
+    // list of points
+    var points_list = [];
+    // for each point to genrate
+    for (let point_index = 0; point_index < number_of_points; point_index++) {
+        // generate a random number of angle and radius
+        var point_angle = 2*Math.PI*Math.random();
+        var point_radius = radius*Math.random();
+        //console.log("Polar:")
+        //console.log(angle + "-" + radius)
+        // convert from polar to cartesian
+        var point_x = center[0] + point_radius*Math.cos(point_angle);
+        var point_y = center[1] + point_radius*Math.sin(point_angle);
+        // create point and add to list
+        points_list.push(new Point([point_x, point_y]));
+    }
+    // return a new cloud
+    return ( new Cloud(points_list, radius, center.slice() ) );
+}
+
 //get canvas and pincel
 var canvas = document.getElementById('canvas');
 var pincel = canvas.getContext('2d');
@@ -762,6 +821,7 @@ var pincel = canvas.getContext('2d');
  * 5 - Rotate
  * 6 - Scale
  * 7 - Select
+ * 8 - Cloud
  */
 var buttonAction = -1;
 
@@ -777,7 +837,7 @@ var mousePressed = false;
 var buffer = [];
 
 // objects of the canvas
-var objects = {"Line" : [], "Point" : [], "Circle" : [], "Polygon" : []};
+var objects = {"Line" : [], "Point" : [], "Circle" : [], "Polygon" : [], "Cloud": []};
 // selected object
 var selected_object = null;
 
@@ -961,6 +1021,36 @@ function onDown(event) {
             // clear and render again
             pincel.clearRect(0, 0, canvas.width, canvas.height);
             renderObjects();
+            break;
+        case 8:
+            if (!drawing_mode) {
+                // add current coordinates to the buffer
+                buffer.push([mouse_x, mouse_y]);
+                // set drawing mode to true
+                drawing_mode = true;
+                
+            } else {
+                // else, then a starting point for the line was already calculated and stored, so get them on the buffer
+                coordinates = buffer.pop();
+                // calculate radius
+                var radius = Math.sqrt( Math.pow(coordinates[0]- mouse_x, 2) + Math.pow(coordinates[1]- mouse_y, 2) );
+
+                // create cloud
+                cloud = random_cloud( coordinates , radius, 200);
+                
+                // add to objects
+                objects["Cloud"].push(cloud);
+
+                // clear buffer
+                buffer = [];
+
+                // render circle
+                cloud.render(pincel);
+                
+                // for last, set drawing mode to false again
+                drawing_mode = false;
+            }
+            break;
 
     } // end switch
 } // end  function
@@ -1097,6 +1187,7 @@ function clearCanvas() {
 function renderObjects() {
     // get types of objects
     const keys = Object.keys(objects);
+    console.log(objects);
     
     // for each type
     for (const key of keys) {
@@ -1137,6 +1228,8 @@ document.getElementById('button_rotate').addEventListener("click", function() {r
 document.getElementById('button_scale').addEventListener("click", function() {resetAction(6); } );
 
 document.getElementById('button_select').addEventListener("click", function() {resetAction(7); } );
+
+document.getElementById('button_cloud').addEventListener("click", function() {resetAction(8); } );
 
 document.getElementById('button_clear').addEventListener("click", function() {clearCanvas();} );
 
