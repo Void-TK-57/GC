@@ -562,12 +562,17 @@ class Line {
     calculate_angular_coefficient() {
         return (this.point2[1] -  this.point1[1]) / (this.point2[0] - this.point1[0]);
     }
+
+    // function to get size of the line
+    size() {
+        return getDistance(this.point1[0], this.point2[0], this.point1[1], this.point2[1]);
+    }
 }
 
 class Circle {
 
-    constructor(coordinates, radius) {
-        this.coordinates = coordinates;
+    constructor(center, radius) {
+        this.center = center;
         this.radius = radius;
     }
 
@@ -575,32 +580,31 @@ class Circle {
         //  begin path
         pincel.beginPath();
         // create a arc with the coordinate on the buffer as the center
-        pincel.arc(this.coordinates[0], this.coordinates[1], this.radius, 0, Math.PI*2 );
+        pincel.arc(this.center.coordinates[0], this.center.coordinates[1], this.radius.size(), 0, Math.PI*2 );
         // stroke on the canvas
         pincel.stroke();
         // close path
         pincel.closePath();
+
+        this.center.render(pincel);
+        this.radius.render(pincel);
     }
 
     collision(x, y) {
         // check if the distance to the center is lower than the radius
-        var distance = getDistance(x, this.coordinates[0], y, this.coordinates[1]);
-        return distance <= this.radius;
+        var distance = getDistance(x, this.center.coordinates[0], y, this.center.coordinates[1]);
+        return distance <= this.radius.size();
     }
 
     // transform method
     transform(transformations) {
-        // get matrix of coordinates
-        var matrix = [ [ this.coordinates[0], ] , [ this.coordinates[1], ] ] ;
-        // transform
-        matrix = pipeline(transformations, matrix);
-        console.log(matrix);
-        // change coordinates
-        this.coordinates = [ matrix[0][0] , matrix[1][0] ];
+        // calcualte transform on center point and line radius
+        this.center.transform(transformations);
+        this.radius.transform(transformations);
     }
 
     getCenter() {
-        return this.coordinates;
+        return this.center.coordinates;
     }
 
 }
@@ -915,7 +919,7 @@ function onDown(event) {
                 var radius = Math.sqrt( Math.pow(coordinates[0]- mouse_x, 2) + Math.pow(coordinates[1]- mouse_y, 2) );
 
                 // create cicle object
-                circle = new Circle( coordinates , radius);
+                circle = new Circle( new Point(coordinates.slice()) , new Line( coordinates.slice(), [mouse_x, mouse_y]) );
                 
                 // add to objects
                 objects["Circle"].push(circle);
