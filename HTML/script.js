@@ -347,16 +347,10 @@ function create_matrix(y, x, value = 0) {
 
 // matrix multiplication
 function dot(matrix1, matrix2) {
-    // console.log("Matrix1:");
-    // console.log(matrix1);
-    // console.log("Matrix 2:");
-    // console.log(matrix2);
     // check shape of matrix 1 and 2
     if ( matrix1[0].length == matrix2.length) {
         // create matrix 
         var matrix = create_matrix(matrix1.length, matrix2[0].length );
-        // console.log("Matrix:");
-        // console.log(matrix);
         // apply the dot algorithm
         for (let i = 0; i < matrix1.length; i++) {
             for (let j = 0; j < matrix2[0].length; j++) {
@@ -434,13 +428,17 @@ class Point {
         var matrix = [ [ this.coordinates[0], ] , [ this.coordinates[1], ] ] ;
         // transform
         matrix = pipeline(transformations, matrix);
-        console.log(matrix);
         // change coordinates
         this.coordinates = [ matrix[0][0] , matrix[1][0] ];
     }
 
     get_center() {
         return this.coordinates;
+    }
+
+    // get absolute (distance) value of the point to the reference of x and y
+    abs(x = 0, y = 0) {
+        return get_distance(this.coordinates[0], x, this.coordinates[1], y);
     }
     
 }
@@ -541,12 +539,11 @@ class Line {
 
     // transform method
     transform(transformations) {
-        console.log("==========================");
         // get matrix of coordinates
         var matrix = [ [ this.point1[0], this.point2[0]] , [ this.point1[1], this.point2[1] ] ] ;
         // transform
         matrix = pipeline(transformations, matrix);
-        console.log(matrix);
+        
         // change coordinates
         this.point1 = [matrix[0][0], matrix[1][0] ];
         this.point2 = [matrix[0][1], matrix[1][1] ];
@@ -559,7 +556,7 @@ class Line {
 
     // function to get size of the line
     size() {
-        return getDistance(this.point1[0], this.point2[0], this.point1[1], this.point2[1]);
+        return get_distance(this.point1[0], this.point2[0], this.point1[1], this.point2[1]);
     }
 
     // function to check if a given point is on the right
@@ -593,7 +590,7 @@ class Circle {
 
     collision(x, y) {
         // check if the distance to the center is lower than the radius
-        var distance = getDistance(x, this.center.coordinates[0], y, this.center.coordinates[1]);
+        var distance = get_distance(x, this.center.coordinates[0], y, this.center.coordinates[1]);
         return distance <= this.radius.size();
     }
 
@@ -780,7 +777,7 @@ class Cloud {
 
     collision(x, y) {
         // check if the distance to the center is lower than the radius
-        var distance = getDistance(x, this.center.coordinates[0], y, this.center.coordinates[1]);
+        var distance = get_distance(x, this.center.coordinates[0], y, this.center.coordinates[1]);
         return distance <= this.radius.size();
     }
 
@@ -795,6 +792,21 @@ class Cloud {
 
     get_center() {
         return this.center.coordinates.slice();
+    }
+
+    // function to get the convex hull
+    get_convex_hull() {
+        // get min point
+        var min = this.min();
+        // return min
+        return min;
+
+    }
+
+    // function to get the minimum point
+    min() {
+        var data = this.points
+        return data.reduce((min, p) => p.abs() < min.abs() ? p : min, data[0]);
     }
 }
 
@@ -835,14 +847,16 @@ var pincel = canvas.getContext('2d');
  * 6 - Scale
  * 7 - Select
  * 8 - Cloud
+ * 9 - Convex Hull
  */
 var buttonAction = -1;
+
+
+var debug = false
 
 // variable which indicates if a drawing was alread started
 var drawing_mode = false;
 
-// rotation mode ( 0 = select origin point, 1 = select vector point, 2 = rotationate the vector formed by the 2 points selected)
-var rotation_mode = 0;
 
 var mousePressed = false;
 
@@ -976,8 +990,6 @@ function onDown(event) {
                     renderBuffer();
                 }
             }
-            console.log("Buffer");
-            console.log(buffer);
             break;
 
         case 4:
@@ -1067,6 +1079,22 @@ function onDown(event) {
                 drawing_mode = false;
             }
             break;
+        case 9:
+            // if the selected object is not null
+            if (selected_object != null) {
+                if (selected_object instanceof Cloud) {
+                    // get polygon
+                    polygon = selected_object.get_convex_hull();
+
+                    if (debug) {
+                        console.log(polygon);
+                    }
+                }
+            } else {
+                alert("Select an Object first");
+            }
+            break;
+
 
     } // end switch
 } // end  function
@@ -1167,7 +1195,7 @@ function renderBuffer() {
 }
 
 // function to get the distance between 2 points
-function getDistance(x1, x2, y1, y2) {
+function get_distance(x1, x2, y1, y2) {
     return Math.sqrt( Math.pow( x1-x2, 2) + Math.pow( y1-y2, 2) );
 }
 
@@ -1187,7 +1215,6 @@ function getAngleOf3Points(x1, y1, x2, y2, x3, y3) {
 function resetAction(newaction = -1) {
     buttonAction = newaction;
     drawing_mode = false;
-    rotation_mode = 0;
     mousePressed = false;
     // clear buffer
     buffer = [];
@@ -1203,7 +1230,6 @@ function clearCanvas() {
 function renderObjects() {
     // get types of objects
     const keys = Object.keys(objects);
-    console.log(objects);
     
     // for each type
     for (const key of keys) {
@@ -1246,6 +1272,8 @@ document.getElementById('button_scale').addEventListener("click", function() {re
 document.getElementById('button_select').addEventListener("click", function() {resetAction(7); } );
 
 document.getElementById('button_cloud').addEventListener("click", function() {resetAction(8); } );
+
+document.getElementById('button_convex_hull').addEventListener("click", function() {resetAction(9); } );
 
 document.getElementById('button_clear').addEventListener("click", function() {clearCanvas();} );
 
