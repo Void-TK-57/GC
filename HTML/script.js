@@ -772,8 +772,8 @@ class Cloud {
 
     collision(x, y) {
         // check if the distance to the center is lower than the radius
-        var distance = getDistance(x, this.center[0], y, this.center[1]);
-        return distance <= this.radius;
+        var distance = getDistance(x, this.center.coordinates[0], y, this.center.coordinates[1]);
+        return distance <= this.radius.size();
     }
 
     // transform method
@@ -786,12 +786,15 @@ class Cloud {
     }
 
     getCenter() {
-        return this.center.slice();
+        return this.center.coordinates.slice();
     }
 }
 
 // function to create a random clound of points
-function random_cloud(center, radius, number_of_points) {
+function random_cloud(circle, number_of_points) {
+    // get circle radius and center
+    var radius = circle.radius.size();
+    var center = circle.center.coordinates.slice();
     // list of points
     var points_list = [];
     // for each point to genrate
@@ -799,8 +802,6 @@ function random_cloud(center, radius, number_of_points) {
         // generate a random number of angle and radius
         var point_angle = 2*Math.PI*Math.random();
         var point_radius = radius*Math.random();
-        //console.log("Polar:")
-        //console.log(angle + "-" + radius)
         // convert from polar to cartesian
         var point_x = center[0] + point_radius*Math.cos(point_angle);
         var point_y = center[1] + point_radius*Math.sin(point_angle);
@@ -808,7 +809,7 @@ function random_cloud(center, radius, number_of_points) {
         points_list.push(new Point([point_x, point_y]));
     }
     // return a new cloud
-    return ( new Cloud(points_list, radius, center.slice() ) );
+    return ( new Cloud(points_list, circle.radius, circle.center) );
 }
 
 //get canvas and pincel
@@ -1039,8 +1040,11 @@ function onDown(event) {
                 // calculate radius
                 var radius = Math.sqrt( Math.pow(coordinates[0]- mouse_x, 2) + Math.pow(coordinates[1]- mouse_y, 2) );
 
+                // create cicle object
+                circle = new Circle( new Point(coordinates.slice()) , new Line( coordinates.slice(), [mouse_x, mouse_y]) );
+
                 // create cloud
-                cloud = random_cloud( coordinates , radius, 200);
+                cloud = random_cloud( circle, 200);
                 
                 // add to objects
                 objects["Cloud"].push(cloud);
