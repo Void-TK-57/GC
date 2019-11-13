@@ -95,7 +95,6 @@ class Vector {
 
 }
 
-
 // matrix class
 class Matrix {
     constructor(rows, cols, data = null, dtype = "N") {
@@ -157,39 +156,40 @@ class Matrix {
     inv() {
         if ( (this.nrows != this.ncols) || (this.dtype != "N") ) {
             throw "Not a Valid Matrix";
-        } else if (this.nrows == 2 ) {
+        } else {
             // get determinant
             var det = this.det();
             // check det
             if (det == 0) {
                 throw "Not Inversible";
-            } else {
-                // return matrix
+            } 
+            // check dimensions
+            if (this.nrows == 2 ) {
+                 // return matrix
                 return new Matrix(2, 2, [[ this.data[1][1]/det, -this.data[0][1]/det], [ -this.data[1][0]/det, this.data[0][0]/det ]]);
+            } else if (this.nrows == 3 ) {
+                // get cofactors
+                var A = det2(this.data[1][1], this.data[1][2], this.data[2][1], this.data[2][2]);
+                var B = -det2(this.data[1][0], this.data[1][2], this.data[2][0], this.data[2][2]);
+                var C = det2(this.data[1][0], this.data[1][1], this.data[2][0], this.data[2][1]);
+                
+                var D = -det2(this.data[0][1], this.data[0][2], this.data[2][1], this.data[2][2]);
+                var E = det2(this.data[0][0], this.data[0][2], this.data[2][0], this.data[2][2]);
+                var F = -det2(this.data[0][0], this.data[0][1], this.data[2][0], this.data[2][1]);
+                
+                var G = det2(this.data[0][1], this.data[0][2], this.data[1][1], this.data[1][2]);
+                var H = -det2(this.data[0][0], this.data[0][2], this.data[1][0], this.data[1][2]);
+                var I = det2(this.data[0][0], this.data[0][1], this.data[1][0], this.data[1][1]);
+                
+                // use formula: A⁽⁻¹⁾ = det(A)⁽⁻¹⁾ * [Cofactor Matrix]^T
+                var transpose = new Matrix(3, 3, [[A, D, G], [B, E, H], [C, F, I]] );
+                // return the trapose divided by the determinant
+                return transpose.div(det);
+            } else {
+                throw "Cant Calculate Inverse for that many dimensions";
             }
-        } else if (this.nrows == 3 ) {
-            // get cofactors
-            var A = det2(this.data[1][1], this.data[1][2], this.data[2][1], this.data[2][2]);
-            var B = -det2(this.data[1][0], this.data[1][2], this.data[2][0], this.data[2][2]);
-            var C = det2(this.data[1][0], this.data[1][1], this.data[2][0], this.data[2][1]);
-
-            var D = -det2(this.data[0][1], this.data[0][2], this.data[2][1], this.data[2][2]);
-            var E = det2(this.data[0][0], this.data[0][2], this.data[2][0], this.data[2][2]);
-            var F = -det2(this.data[0][0], this.data[0][1], this.data[2][0], this.data[2][1]);
-
-            var G = det2(this.data[0][1], this.data[0][2], this.data[1][1], this.data[1][2]);
-            var H = -det2(this.data[0][0], this.data[0][2], this.data[1][0], this.data[1][2]);
-            var I = det2(this.data[0][0], this.data[0][1], this.data[1][0], this.data[1][1]);
-
-            // get determinant
-            var det = this.det();
-            // use formula: A⁽⁻¹⁾ = det(A)⁽⁻¹⁾ * [Cofactor Matrix]^T
-            var transpose = new Matrix(3, 3, [[A, D, G], [B, E, H], [C, F, I]] );
-            return transpose.div(det);
-        } else {
-            throw "Cant Calculate Inverse for that many dimensions";
         }
-    }
+    } 
 
     print() {
         // for each row
@@ -226,7 +226,6 @@ class Matrix {
         return this;
     }
 }
-
 
 // triangle class
 class Triangle {
@@ -346,11 +345,6 @@ function create_matrix(y, x, value = 0) {
     return matrix;
 }
 
-// function to calculate a determinant of a 2x2
-function det2(a, b, c, d) {
-    return(a*c - b*d);
-}
-
 // matrix multiplication
 function dot(matrix1, matrix2) {
     // console.log("Matrix1:");
@@ -445,7 +439,7 @@ class Point {
         this.coordinates = [ matrix[0][0] , matrix[1][0] ];
     }
 
-    getCenter() {
+    get_center() {
         return this.coordinates;
     }
     
@@ -527,7 +521,7 @@ class Line {
         } // end while
     } // end function
 
-    getCenter() {
+    get_center() {
         return [ (this.point1[0] + this.point2[0])/2, (this.point1[1] + this.point2[1])/2 ];
     }
 
@@ -567,6 +561,13 @@ class Line {
     size() {
         return getDistance(this.point1[0], this.point2[0], this.point1[1], this.point2[1]);
     }
+
+    // function to check if a given point is on the right
+    on_right(point) {
+        var expression = ((point.coordinates[1] - this.point1[1])*(this.point2[0] - this.point1[0])) - ((point.coordinates[0] - this.point1[0])*(this.point2[1] - this.point1[1]));
+        // if the expression above is < 0 is on the right ( exp > 0 :=> left and exp == 0 :=> neither)
+        return (expression < 0 );
+    }
 }
 
 class Circle {
@@ -603,7 +604,7 @@ class Circle {
         this.radius.transform(transformations);
     }
 
-    getCenter() {
+    get_center() {
         return this.center.coordinates;
     }
 
@@ -612,12 +613,19 @@ class Circle {
 // polygon class
 class Polygon {
 
-    constructor(coordinates) {
-        this.coordinates = this.generateLine(coordinates);
+    constructor(coordinates, by_points = true) {
+        // check if coordinates passed is a list of points
+        if (by_points) {
+            // if so, generate line based on them
+            this.coordinates = this.generate_lines(coordinates);
+        } else {
+            // else, coordinates are a list of lines, then it doesn need pre processing
+            this.coordinates = coordinates.slice()
+        }
     }
 
-    // method to create a line based on the coordinates
-    generateLine(coordinates) {
+    // method to create a line based on the list of coordinates of points
+    generate_lines(coordinates) {
         // create a copy of the coordinates
         var copy = coordinates.slice()
         // new coordinates based on line
@@ -735,7 +743,7 @@ class Polygon {
 
     } // end of the colision function
 
-    getCenter() {
+    get_center() {
         // sum of x, y, and total of x,y
         var x = 0;
         var y = 0;
@@ -785,7 +793,7 @@ class Cloud {
         }
     }
 
-    getCenter() {
+    get_center() {
         return this.center.coordinates.slice();
     }
 }
@@ -983,7 +991,7 @@ function onDown(event) {
             // if the selected object is not null
             if (selected_object != null) {
                 // get object center points
-                center_selected_object = selected_object.getCenter();
+                center_selected_object = selected_object.get_center();
             } else {
                 alert("Select an Object first");
             }
@@ -993,7 +1001,7 @@ function onDown(event) {
             // if the selected object is not null
             if (selected_object != null) {
                 // get object center points
-                center_selected_object = selected_object.getCenter();
+                center_selected_object = selected_object.get_center();
             } else {
                 alert("Select an Object first");
             }
@@ -1044,7 +1052,7 @@ function onDown(event) {
                 circle = new Circle( new Point(coordinates.slice()) , new Line( coordinates.slice(), [mouse_x, mouse_y]) );
 
                 // create cloud
-                cloud = random_cloud( circle, 200);
+                cloud = random_cloud( circle, 40);
                 
                 // add to objects
                 objects["Cloud"].push(cloud);
@@ -1090,7 +1098,7 @@ function onMove(event) {
                 // if the selected object is not null
                 if (selected_object != null) {
                     // get object center points
-                    var center = selected_object.getCenter();
+                    var center = selected_object.get_center();
                     // check denominator
                     var denominator_x = (mouse_x-center[0]);
                     if (denominator_x == 0) {
