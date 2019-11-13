@@ -798,7 +798,19 @@ class Cloud {
     get_convex_hull() {
         // get min point
         var min = this.min();
-        // return min
+        // get copy of list of points
+        var points = this.points.slice();
+        // function of comparasion of angles
+        function comp(p1, p2) {
+            // create 2 lines, from min to p1 and p2
+            var line1 = new Line(min.coordinates.slice(), p1.coordinates.slice());
+            var line2 = new Line(min.coordinates.slice(), p2.coordinates.slice());
+        }
+        // sort based on distance
+        lines.sort(function(a, b) {return b.abs(x=min.coordinates[0], y=min.coordinates[1]) - a.abs(x=min.coordinates[0], y=min.coordinates[1]) } )
+        // stack of points
+        stack = [];
+
         return min;
 
     }
@@ -811,7 +823,7 @@ class Cloud {
 }
 
 // function to create a random clound of points
-function random_cloud(circle, number_of_points) {
+function random_cloud(circle, number_of_points=10) {
     // get circle radius and center
     var radius = circle.radius.size();
     var center = circle.center.coordinates.slice();
