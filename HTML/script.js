@@ -761,10 +761,9 @@ class Polygon {
 
 // Cloud of Points class
 class Cloud {
-    constructor(points, radius, center) {
+    constructor(points, circle) {
         this.points = points;
-        this.radius = radius;
-        this.center = center;
+        this.circle = circle;
     }
 
     // method to render 
@@ -777,12 +776,14 @@ class Cloud {
 
     collision(x, y) {
         // check if the distance to the center is lower than the radius
-        var distance = get_distance(x, this.center.coordinates[0], y, this.center.coordinates[1]);
-        return distance <= this.radius.size();
+        var distance = get_distance(x, this.circle.center.coordinates[0], y, this.circle.center.coordinates[1]);
+        return distance <= this.circle.radius.size();
     }
 
     // transform method
     transform(transformations) {
+        // aply transformation to the circle
+        this.circle.transform(transformations)
         // apply transformation for each point in the cloud
         for (let index = 0; index < this.points.length; index++) {
             // apply transformation
@@ -791,7 +792,7 @@ class Cloud {
     }
 
     get_center() {
-        return this.center.coordinates.slice();
+        return this.circle.center.coordinates.slice();
     }
 
     // function to get the convex hull
@@ -841,7 +842,7 @@ function random_cloud(circle, number_of_points=10) {
         points_list.push(new Point([point_x, point_y]));
     }
     // return a new cloud
-    return ( new Cloud(points_list, circle.radius, circle.center) );
+    return ( new Cloud(points_list, circle) );
 }
 
 //get canvas and pincel
