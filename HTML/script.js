@@ -565,6 +565,23 @@ class Line {
         // if the expression above is < 0 is on the right ( exp > 0 :=> left and exp == 0 :=> neither)
         return (expression < 0 );
     }
+
+    // function to calculate the distance to the point
+    distance_point(point) {
+        // get x0 and y0
+        var x0 = point.coordinates[0];
+        var y0 = point.coordinates[1];
+        // get coordinates of the line
+        var x1 = this.point1[0];
+        var y1 = this.point1[1];
+        var x2 = this.point2[0];
+        var y2 = this.point2[1];
+        // get distance
+        var distance =  Math.abs( (y2 - y1)*x0 - (x2 -x1)*y0 + x2*y1 - y2*x1 ) / Math.sqrt( (y2 - y1)*(y2 - y1) + (x2 - x1)*(x2 - x1) );
+        // return distance
+        return(distance);
+
+    }
 }
 
 class Circle {
@@ -610,15 +627,30 @@ class Circle {
 // polygon class
 class Polygon {
 
-    constructor(coordinates, by_points = true) {
+    constructor(coordinates, by_points = true, is_point = false) {
         // check if coordinates passed is a list of points
         if (by_points) {
-            // if so, generate line based on them
-            this.coordinates = this.generate_lines(coordinates);
+            // check if coordinates are points
+            if (is_point) {
+                this.coordinates = this.generate_lines( this.generate_coordinates(coordinates) );
+            } else {
+                this.coordinates = this.generate_lines(coordinates);
+            }
         } else {
             // else, coordinates are a list of lines, then it doesn need pre processing
             this.coordinates = coordinates.slice()
         }
+    }
+
+    // generate array of coordinates from array of points
+    generate_coordinates(points) {
+        // new array
+        var new_array = [];
+        for (let index = 0; index < points.length; index++) {
+            new_array.push( points[index].coordinates.slice() );   
+        }
+        // return new array
+        return  new_array;
     }
 
     // method to create a line based on the list of coordinates of points
@@ -797,29 +829,87 @@ class Cloud {
 
     // function to get the convex hull
     get_convex_hull() {
-        // get min point
-        var min = this.min();
-        // get copy of list of points
-        var points = this.points.slice();
-        // function of comparasion of angles
-        function comp(p1, p2) {
-            // create 2 lines, from min to p1 and p2
-            var line1 = new Line(min.coordinates.slice(), p1.coordinates.slice());
-            var line2 = new Line(min.coordinates.slice(), p2.coordinates.slice());
-        }
-        // sort based on distance
-        lines.sort(function(a, b) {return b.abs(x=min.coordinates[0], y=min.coordinates[1]) - a.abs(x=min.coordinates[0], y=min.coordinates[1]) } )
-        // stack of points
-        stack = [];
-
-        return min;
-
+        // s1 and s2
+        var s1 = [];
+        var s2 = [];
+        // get min and max points
+        var p_min = this.min_max("min");
+        var p_max = this.min_max("max");
+        // create line based on 2 points
+        var line = new Line(p_min.coordinates.slice(), p_max.coordinates.slice());
+        // add other points to s1 or s2
+        for (let index = 0; index < this.points.length; index++) {
+            var point = this.points[index];
+            // if point istn wither min and max
+            if ( (point != p_min) && (point != p_max) ) {
+                // check if it is on the right
+                if (line.on_right(point)) {
+                    s1.push(point);
+                } else {
+                    s2.push(point);
+                }
+            }
+        } // end of for loop
+        var h1 = this.hull_set(s1, p_min, p_max);
+        var h2 = this.hull_set(s2, p_max, p_min);
+        // return p_min + p_max + Hellset on boths sets
+        return [p_min].concat( h1 ).concat([p_max]).concat( h2 );
     }
 
-    // function to get the minimum point
-    min() {
-        var data = this.points
-        return data.reduce((min, p) => p.abs() < min.abs() ? p : min, data[0]);
+    // hull set fuction
+    hull_set(set, p1, p2) {
+        // check if Set is empty
+        if (set.length == 0) {
+            return([])
+        } else {
+            // create line
+            var line = new Line(p1.coordinates.slice(), p2.coordinates.slice());
+            // get minimum distance
+            var p3 = set.reduce( ( min , p) => line.distance_point(p) > line.distance_point(min) ? p : min, set[0] );
+
+            // get points ad the rigth of p1 -> p3
+            // create line
+            var p1p3 = new Line(p1.coordinates.slice(), p3.coordinates.slice());
+            // set of points on the right
+            var set1 = [];
+            // for each point in set, check if its on the right
+            for (let index = 0; index < set.length; index++) {
+                var point = set[index];
+                // check if it is on the right
+                if (p1p3.on_right(point)) {
+                    set1.push(point);
+                } 
+            }
+
+            // get points ad the rigth of p3 -> p2
+            // create line
+            var p3p2 = new Line(p3.coordinates.slice(), p2.coordinates.slice());
+            // set of points on the right
+            var set2 = [];
+            // for each point in set, check if its on the right
+            for (let index = 0; index < set.length; index++) {
+                var point = set[index];
+                // check if it is on the right
+                if (p3p2.on_right(point)) {
+                    set2.push(point);
+                } 
+            }
+            var h1 = this.hull_set(set1, p1, p3);
+            var h2 = this.hull_set(set2, p3, p2);
+
+            // return p3 + Hellset on boths sets
+            return h1.concat( [p3,] ).concat( h2 );
+        }
+    }
+
+    // function to get the minimum or maximum point
+    min_max(type = "max") {
+        if (type == "max") {
+            return this.points.reduce(  (max_min , p) => p.abs() > max_min.abs() ? p : max_min, this.points[0] );
+        } else {
+            return this.points.reduce(  (max_min , p) => p.abs() < max_min.abs() ? p : max_min, this.points[0] );
+        }
+        
     }
 }
 
@@ -865,7 +955,7 @@ var pincel = canvas.getContext('2d');
 var buttonAction = -1;
 
 
-var debug = false
+var debug = true;
 
 // variable which indicates if a drawing was alread started
 var drawing_mode = false;
@@ -1077,7 +1167,7 @@ function onDown(event) {
                 circle = new Circle( new Point(coordinates.slice()) , new Line( coordinates.slice(), [mouse_x, mouse_y]) );
 
                 // create cloud
-                cloud = random_cloud( circle, 40);
+                cloud = random_cloud( circle, 200);
                 
                 // add to objects
                 objects["Cloud"].push(cloud);
@@ -1097,11 +1187,15 @@ function onDown(event) {
             if (selected_object != null) {
                 if (selected_object instanceof Cloud) {
                     // get polygon
-                    polygon = selected_object.get_convex_hull();
+                    var polygon = selected_object.get_convex_hull();
 
                     if (debug) {
                         console.log(polygon);
                     }
+
+                    // create a polygon object
+                    polygon = new Polygon(polygon, true, true);
+                    polygon.render(pincel);
                 }
             } else {
                 alert("Select an Object first");
