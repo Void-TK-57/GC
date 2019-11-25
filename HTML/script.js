@@ -19,6 +19,39 @@ function create_matrix(y, x, value = 0) {
     return matrix;
 }
 
+
+// function to get the distance between 2 points
+function get_distance(x1, x2, y1, y2) {
+    return Math.sqrt( Math.pow( x1-x2, 2) + Math.pow( y1-y2, 2) );
+}
+
+// function to get the angle formed by 3 points with orientation (as 2 latter points connect to the first point)
+function getAngleOf3PointsOrientation(x1, y1, x2, y2, x3, y3) {
+    // check if the has a angle
+    if ( ( (x1 == x2) && (y1 == y2) ) || ( (x1 == x3) || (y1 == y3) ) ) {
+        return 0;
+    }
+    // get angle as the diference of the angle of the two line to the x axis
+    var angle  = Math.atan2(y3 - y1, x3 - x1) - Math.atan2(y2 - y1, x2 - x1)
+    // return angle
+    return angle;
+}
+
+// function to get the angle formed by 3 points (as 2 latter points connect to the first point)
+
+function getAngleOf3Points(x1, y1, x2, y2, x3, y3) {
+    //distance squared
+    var d12 = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
+    var d13 = (x1-x3)*(x1-x3) + (y1-y3)*(y1-y3);
+    var d23 = (x3-x2)*(x3-x2) + (y3-y2)*(y3-y2);
+    // check d12 and d13
+    if ( (d12 == 0) || (d13 == 0)) {
+        return(0);
+    }
+    // return arc cos
+    return(Math.acos( (d12 + d13 - d23)/(2*Math.sqrt(d12*d13) ) ));
+}
+
 // vector class
 class Vector {
     constructor(data = null, length = 0) {
@@ -233,12 +266,16 @@ class Triangle {
         this.p1 = p1;
         this.p2 = p2;
         this.p3 = p3;
+        // angles of points
+        this.angle1 = getAngleOf3Points(this.p1.coordinates[0], this.p1.coordinates[1], this.p2.coordinates[0], this.p2.coordinates[1], this.p3.coordinates[0], this.p3.coordinates[1]);
+        this.angle2 = getAngleOf3Points(this.p2.coordinates[0], this.p2.coordinates[1], this.p3.coordinates[0], this.p3.coordinates[1], this.p1.coordinates[0], this.p1.coordinates[1]);
+        this.angle3 = getAngleOf3Points(this.p3.coordinates[0], this.p3.coordinates[1], this.p1.coordinates[0], this.p1.coordinates[1], this.p2.coordinates[0], this.p2.coordinates[1]);
     }
 
     to_barycentric(p) {
         // cnvert to matrix as homogean coordinates
-        var cartesian = new Matrix(3, 1, [[p.x,], [p.y,], [1,]]);
-        var triangle = new Matrix(3, 3, [[this.p1.x, this.p2.x, this.p3.x], [this.p1.y, this.p2.y, this.p3.y], [1, 1, 1]]);
+        var cartesian = new Matrix(3, 1, [[p.coordinates[0],], [p.coordinates[1],], [1,]]);
+        var triangle = new Matrix(3, 3, [[this.p1.coordinates[0], this.p2.coordinates[0], this.p3.coordinates[0]], [this.p1.coordinates[1], this.p2.coordinates[1], this.p3.coordinates[1]], [1, 1, 1]]);
         // formula : lambda = T⁽⁻¹⁾ * P
         var inv = triangle.inv();
         return inv.mul(cartesian);
@@ -258,6 +295,38 @@ class Triangle {
         // if none was negative, retarne true
         return true;
 
+    }
+
+    // function to calculate the circumceter
+    circumceter() {
+        var x1 = this.p1.coordinates[0];
+        var x2 = this.p2.coordinates[0];
+        var x3 = this.p3.coordinates[0];
+        var y1 = this.p1.coordinates[1];
+        var y2 = this.p2.coordinates[1];
+        var y3 = this.p3.coordinates[1];
+        var sin1 = Math.sin(2*this.angle1);
+        var sin2 = Math.sin(2*this.angle2);
+        var sin3 = Math.sin(2*this.angle3);
+        var x = (x1*sin1 + x2*sin2 + x3*sin3)/(sin1 + sin2 + sin3)
+        var y = (y1*sin1 + y2*sin2 + y3*sin3)/(sin1 + sin2 + sin3)
+        // return new point
+        return new Point([x, y]);
+    }
+
+    // circle
+    circle() {
+        // get center
+        var center = this.circumceter();
+        // get radius
+        var radius = new Line(this.p1.coordinates, center.coordinates);
+        // create circle
+        return( new Circle(center, radius) );
+    }
+
+    // function to calculate the angles of the traingle
+    get_angles() {
+        //
     }
 }
 
@@ -457,6 +526,7 @@ function CodeCoordinate(x, y, xc, yc, tol) {
 class Line {
 
     constructor(point1, point2) {
+        // points are list
         this.point1 = point1;
         this.point2 = point2;
         this.angular_coefficient = this.calculate_angular_coefficient();
@@ -806,10 +876,15 @@ class Cloud {
         }
     }
 
-    collision(x, y) {
+    collision(x, y, inner = false) {
         // check if the distance to the center is lower than the radius
         var distance = get_distance(x, this.circle.center.coordinates[0], y, this.circle.center.coordinates[1]);
-        return distance <= this.circle.radius.size();
+        if (inner) {
+            return distance < this.circle.radius.size();
+        } else {
+            return distance <= this.circle.radius.size();
+        }
+        
     }
 
     // transform method
@@ -911,7 +986,127 @@ class Cloud {
         }
         
     }
+
+    // function to get voronoi
+    get_voronoi(pincel) {
+        console.log("Voronoi");
+        // get voronoi points
+        var v_points = this.get_voronoi_points(pincel);
+        // get lines
+        var lines = this.get_voronoi_lines(v_points, pincel);
+
+        // draw points
+        for (let index = 0; index < v_points.length; index++) {
+            v_points[index].render(pincel);
+            
+        }
+
+    }
+    
+    // function to get voronoi lines
+    get_voronoi_lines(points, pincel) {
+        // sites
+        var sites = this.points;
+        console.log(sites);
+        // for each 2 sites, generate the edge and get middle point
+        for (let i = 0; i < sites.length; i++) {
+            // first site
+            var s1 = sites[i];
+            for (let j = 0; j < sites.length; j++) {
+                if (i != j) {
+                    // other site
+                    var s2 = sites[j];
+                    // get point between
+                    var x = ( s1.coordinates[0] + s2.coordinates[0] )/2;
+                    var y = ( s1.coordinates[1] + s2.coordinates[1] )/2;
+                    var p = new Point([x, y]);
+                    // create circle
+                    var circle = new Circle(p, new Line([x, y], s1.coordinates.slice()));
+                    console.log(circle);
+                    circle.render(pincel);
+                }
+            }
+        }
+        var edge = null;
+        
+    }
+
+    // function to get voronoi points
+    get_voronoi_points() {
+        // points
+        var points = [];
+        var array = this.points.slice();
+        // check number of points
+        if (array.length >= 3) {
+            // for each 3 points
+            for (let i = 0; i < array.length; i++) {
+                var p1 = array[i];
+                for (let j = 0; j < array.length; j++) {
+                    if (i != j) {
+                        var p2 = array[j];
+                        for (let k = 0; k < array.length; k++) {
+                            if ( (k != i) && (k != j) ) {
+                                var p3 = array[k];
+                                // create Triangle
+                                var triangle = new Triangle(p1, p2, p3);
+                                // get circumcenter
+                                var center = triangle.circumceter();
+                                // create circle area
+                                var circle = new Circle(center, new Line(p1.coordinates.slice(), center.coordinates.slice()));
+                                // boolean if there is another point within the circle
+                                var there_is = false;
+                                // for every other point
+                                for (let m = 0; m < array.length; m++) {
+                                    if ((m != i) && (m != j) && (m != k)) {
+                                        // other point
+                                        var other = array[m];
+                                        // check if there is point within the circle
+                                        if (circle.collision(other.coordinates[0], other.coordinates[1], true)) {
+                                            // then it is not a voronoi vertex
+                                            there_is = true;
+                                            break;
+                                        }
+                                    }
+                                } // end fourth for
+
+                                // check if there is not
+                                if (!there_is) {
+                                    var add = true;
+                                    // check if the poit is already in
+                                    for (let i = 0; i < points.length; i++) {
+                                        // create point
+                                        var point = points[i];
+                                        // check if x and y coordinates are equal
+                                        if ( (point.coordinates[0].toFixed(8) == center.coordinates[0].toFixed(8)) && (point.coordinates[0].toFixed(8) == center.coordinates[0].toFixed(8)) ) {
+                                            // change add to false
+                                            add = false;
+                                        }
+                                    } // end of loop
+
+                                    if (add) {
+                                        // add to set
+                                        points.push(center);
+                                    }
+    
+                                } // end of if
+                            }
+                            
+                        } // end thrid for
+                    }
+                } // end second for
+
+            } // end first for
+            // render points
+            for (let i = 0; i < points.length; i++) {
+                // create point
+                var point = points[i];
+            }
+            // return ponts
+            return(points);
+        }
+    } // end function
 }
+
 
 // function to create a random clound of points
 function random_cloud(circle, number_of_points=10) {
@@ -935,9 +1130,17 @@ function random_cloud(circle, number_of_points=10) {
     return ( new Cloud(points_list, circle) );
 }
 
+//=================================================================================================================================================
+//=================================================================================================================================================
+//    Canvas Implementation
+//=================================================================================================================================================
+//=================================================================================================================================================
+//=================================================================================================================================================
+
 //get canvas and pincel
 var canvas = document.getElementById('canvas');
 var pincel = canvas.getContext('2d');
+
 
 // variable representes current action to do on the canvas
 /*
@@ -951,6 +1154,8 @@ var pincel = canvas.getContext('2d');
  * 7 - Select
  * 8 - Cloud
  * 9 - Convex Hull
+ * 10- Voronoi
+ * 11- Delaney
  */
 var buttonAction = -1;
 
@@ -1167,7 +1372,8 @@ function onDown(event) {
                 circle = new Circle( new Point(coordinates.slice()) , new Line( coordinates.slice(), [mouse_x, mouse_y]) );
 
                 // create cloud
-                cloud = random_cloud( circle, 200);
+                cloud = random_cloud( circle, 3);
+                
                 
                 // add to objects
                 objects["Cloud"].push(cloud);
@@ -1201,6 +1407,19 @@ function onDown(event) {
                 alert("Select an Object first");
             }
             break;
+
+            case 10:
+                // if the selected object is not null
+                if (selected_object != null) {
+                    if (selected_object instanceof Cloud) {
+                        // get polygon
+                        selected_object.get_voronoi(pincel);
+
+                    }
+                } else {
+                    alert("Select an Object first");
+                }
+                break;
 
 
     } // end switch
@@ -1260,7 +1479,7 @@ function onMove(event) {
             case 5:
                 // if the selected object is not null
                 if (selected_object != null) {
-                    var d_angle = getAngleOf3Points(center_selected_object[0], center_selected_object[1], mouse_x, mouse_y, event.clientX - pincel.canvas.offsetLeft, event.clientY - pincel.canvas.offsetTop);
+                    var d_angle = getAngleOf3PointsOrientation(center_selected_object[0], center_selected_object[1], mouse_x, mouse_y, event.clientX - pincel.canvas.offsetLeft, event.clientY - pincel.canvas.offsetTop);
                     // transform the object (by moving - center units of distance, then scale, then moving + center units of distance again. aka. scale based on is center)
                     selected_object.transform([ new Translate(-center_selected_object[0], -center_selected_object[1]) , new Rotation(d_angle), new Translate(center_selected_object[0], center_selected_object[1]) ] );
                 }
@@ -1301,22 +1520,6 @@ function renderBuffer() {
     
 }
 
-// function to get the distance between 2 points
-function get_distance(x1, x2, y1, y2) {
-    return Math.sqrt( Math.pow( x1-x2, 2) + Math.pow( y1-y2, 2) );
-}
-
-// function to get the angle formed by 3 points (as 2 latter points connect to the first point)
-function getAngleOf3Points(x1, y1, x2, y2, x3, y3) {
-    // check if the has a angle
-    if ( ( (x1 == x2) && (y1 == y2) ) || ( (x1 == x3) || (y1 == y3) ) ) {
-        return 0;
-    }
-    // get angle as the diference of the angle of the two line to the x axis
-    var angle  = Math.atan2(y3 - y1, x3 - x1) - Math.atan2(y2 - y1, x2 - x1)
-    // return angle
-    return angle;
-}
 
 // function to reset action
 function resetAction(newaction = -1) {
@@ -1381,6 +1584,10 @@ document.getElementById('button_select').addEventListener("click", function() {r
 document.getElementById('button_cloud').addEventListener("click", function() {resetAction(8); } );
 
 document.getElementById('button_convex_hull').addEventListener("click", function() {resetAction(9); } );
+
+document.getElementById('button_voronoi').addEventListener("click", function() {resetAction(10); } );
+
+document.getElementById('button_delaney').addEventListener("click", function() {resetAction(11); } );
 
 document.getElementById('button_clear').addEventListener("click", function() {clearCanvas();} );
 
