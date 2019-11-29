@@ -37,6 +37,21 @@ function getAngleOf3PointsOrientation(x1, y1, x2, y2, x3, y3) {
     return angle;
 }
 
+// function to get the y of the mediatrix
+function y_mediatrix(x1, y1, x2, y2, x) {
+    var m = (x1 - x2)/(y2 - y1);
+    var i = ( (x2*x2 + y2*y2) - (x1*x1 + y1*y1) )/(2*(y2 - y1));
+    return(m*x + i);
+}
+
+// function to get the x of themediatrix
+function x_mediatrix(x1, y1, x2, y2, y) {
+    var m = (y1 - y2)/(x2 - x1);
+    var i = ( (x2*x2 + y2*y2) - (x1*x1 + y1*y1) )/(2*(x2 - x1));
+    return(m*y + i);
+}
+
+
 // function to get the angle formed by 3 points (as 2 latter points connect to the first point)
 
 function getAngleOf3Points(x1, y1, x2, y2, x3, y3) {
@@ -311,7 +326,7 @@ class Triangle {
         var x = (x1*sin1 + x2*sin2 + x3*sin3)/(sin1 + sin2 + sin3)
         var y = (y1*sin1 + y2*sin2 + y3*sin3)/(sin1 + sin2 + sin3)
         // return new point
-        return new Point([x, y]);
+        return new Dot([x, y]);
     }
 
     // circle
@@ -468,7 +483,7 @@ function pipeline(transformations, original_matrix) {
 }
 
 //main object classes
-class Point {
+class Dot {
 
     constructor(coordinates) {
         this.coordinates = coordinates;
@@ -672,7 +687,7 @@ class Circle {
         pincel.closePath();
 
         this.center.render(pincel);
-        this.radius.render(pincel);
+        //this.radius.render(pincel);
     }
 
     collision(x, y) {
@@ -866,6 +881,8 @@ class Cloud {
     constructor(points, circle) {
         this.points = points;
         this.circle = circle;
+        // create voronoi object
+        this.voronoi = this.create_voronoi();
     }
 
     // method to render 
@@ -896,6 +913,8 @@ class Cloud {
             // apply transformation
             this.points[index].transform(transformations);
         }
+        // recreate voronoi
+        this.voronoi = this.create_voronoi();
     }
 
     get_center() {
@@ -987,124 +1006,70 @@ class Cloud {
         
     }
 
-    // function to get voronoi
-    get_voronoi(pincel) {
-        console.log("Voronoi");
-        // get voronoi points
-        var v_points = this.get_voronoi_points(pincel);
-        // get lines
-        var lines = this.get_voronoi_lines(v_points, pincel);
-
-        // draw points
-        for (let index = 0; index < v_points.length; index++) {
-            v_points[index].render(pincel);
-            
+    create_voronoi() {
+        var v = new Voronoi();
+        var points = [];
+        // for every point, convert to point class
+        for (let index = 0; index < this.points.length; index++) {
+            var point = this.points[index];
+            // create new point
+            point = new Point(point.coordinates[0], point.coordinates[1]);   
+            // add to points
+            points.push(point);  
         }
-
-    }
-    
-    // function to get voronoi lines
-    get_voronoi_lines(points, pincel) {
-        // sites
-        var sites = this.points;
-        console.log(sites);
-        // for each 2 sites, generate the edge and get middle point
-        for (let i = 0; i < sites.length; i++) {
-            // first site
-            var s1 = sites[i];
-            for (let j = 0; j < sites.length; j++) {
-                if (i != j) {
-                    // other site
-                    var s2 = sites[j];
-                    // get point between
-                    var x = ( s1.coordinates[0] + s2.coordinates[0] )/2;
-                    var y = ( s1.coordinates[1] + s2.coordinates[1] )/2;
-                    var p = new Point([x, y]);
-                    // create circle
-                    var circle = new Circle(p, new Line([x, y], s1.coordinates.slice()));
-                    console.log(circle);
-                    circle.render(pincel);
-                }
-            }
-        }
-        var edge = null;
+        // compute voronoi
+        v.Compute(points, canvas.width, canvas.height);
+        // return voronoi object
+        return v;
         
     }
 
-    // function to get voronoi points
-    get_voronoi_points() {
-        // points
-        var points = [];
-        var array = this.points.slice();
-        // check number of points
-        if (array.length >= 3) {
-            // for each 3 points
-            for (let i = 0; i < array.length; i++) {
-                var p1 = array[i];
-                for (let j = 0; j < array.length; j++) {
-                    if (i != j) {
-                        var p2 = array[j];
-                        for (let k = 0; k < array.length; k++) {
-                            if ( (k != i) && (k != j) ) {
-                                var p3 = array[k];
-                                // create Triangle
-                                var triangle = new Triangle(p1, p2, p3);
-                                // get circumcenter
-                                var center = triangle.circumceter();
-                                // create circle area
-                                var circle = new Circle(center, new Line(p1.coordinates.slice(), center.coordinates.slice()));
-                                // boolean if there is another point within the circle
-                                var there_is = false;
-                                // for every other point
-                                for (let m = 0; m < array.length; m++) {
-                                    if ((m != i) && (m != j) && (m != k)) {
-                                        // other point
-                                        var other = array[m];
-                                        // check if there is point within the circle
-                                        if (circle.collision(other.coordinates[0], other.coordinates[1], true)) {
-                                            // then it is not a voronoi vertex
-                                            there_is = true;
-                                            break;
-                                        }
-                                    }
-                                } // end fourth for
-
-                                // check if there is not
-                                if (!there_is) {
-                                    var add = true;
-                                    // check if the poit is already in
-                                    for (let i = 0; i < points.length; i++) {
-                                        // create point
-                                        var point = points[i];
-                                        // check if x and y coordinates are equal
-                                        if ( (point.coordinates[0].toFixed(8) == center.coordinates[0].toFixed(8)) && (point.coordinates[0].toFixed(8) == center.coordinates[0].toFixed(8)) ) {
-                                            // change add to false
-                                            add = false;
-                                        }
-                                    } // end of loop
-
-                                    if (add) {
-                                        // add to set
-                                        points.push(center);
-                                    }
-    
-                                } // end of if
-                            }
-                            
-                        } // end thrid for
-                    }
-                } // end second for
-
-            } // end first for
-            // render points
-            for (let i = 0; i < points.length; i++) {
-                // create point
-                var point = points[i];
-            }
-            // return ponts
-            return(points);
+    // function to get delaney
+    get_delaney(pincel) {
+        var edges = this.voronoi.GetEdges();
+        var styles = [pincel.strokeStyle , pincel.fillStyle ];            
+        pincel.strokeStyle = "#00FF00";
+        pincel.fillStyle = "#00FF00";
+        // for each edge
+        for(i=0; i<edges.length; i++) {
+            // get edge
+            var edge = edges[i];
+            // draw edge (from left to right)
+			pincel.beginPath();
+			pincel.moveTo(edge.left.x, edge.left.y);
+			pincel.lineTo(edge.right.x, edge.right.y);
+			pincel.closePath();
+			pincel.stroke();
         }
-    } // end function
+        pincel.strokeStyle = styles[0];
+        pincel.fillStyle = styles[1];
+        
+        
+    }
+
+    // function to get voronoi
+    get_voronoi(pincel) {
+        var edges = this.voronoi.GetEdges();
+        var styles = [pincel.strokeStyle , pincel.fillStyle ];            
+        pincel.strokeStyle = "#00FF00";
+        pincel.fillStyle = "#00FF00";
+        // for each edge
+        for(let i = 0 ; i < edges.length; i++) {
+            // get edge
+            var edge = edges[i];
+            // draw edge (from start to end)
+			pincel.beginPath();
+			pincel.moveTo(edge.start.x, edge.start.y);
+			pincel.lineTo(edge.end.x, edge.end.y);
+			pincel.closePath();
+			pincel.stroke();
+        }
+        pincel.strokeStyle = styles[0];
+        pincel.fillStyle = styles[1];
+        
+    }
+    
+    
 }
 
 
@@ -1124,7 +1089,7 @@ function random_cloud(circle, number_of_points=10) {
         var point_x = center[0] + point_radius*Math.cos(point_angle);
         var point_y = center[1] + point_radius*Math.sin(point_angle);
         // create point and add to list
-        points_list.push(new Point([point_x, point_y]));
+        points_list.push(new Dot([point_x, point_y]));
     }
     // return a new cloud
     return ( new Cloud(points_list, circle) );
@@ -1144,7 +1109,7 @@ var pincel = canvas.getContext('2d');
 
 // variable representes current action to do on the canvas
 /*
- * 0 - Point
+ * 0 - Dot
  * 1 - Line
  * 2 - Circle
  * 3 - Polygon
@@ -1172,7 +1137,7 @@ var mousePressed = false;
 var buffer = [];
 
 // objects of the canvas
-var objects = {"Line" : [], "Point" : [], "Circle" : [], "Polygon" : [], "Cloud": []};
+var objects = {"Line" : [], "Dot" : [], "Circle" : [], "Polygon" : [], "Cloud": []};
 // selected object
 var selected_object = null;
 
@@ -1195,10 +1160,10 @@ function onDown(event) {
             // if the mode selected is point (code: 0)
             
             // create a point object
-            point = new Point( [mouse_x, mouse_y] );
+            point = new Dot( [mouse_x, mouse_y] );
 
             // add to objects
-            objects["Point"].push(point);
+            objects["Dot"].push(point);
 
             // clear buffer
             buffer = [];
@@ -1250,7 +1215,7 @@ function onDown(event) {
                 var radius = Math.sqrt( Math.pow(coordinates[0]- mouse_x, 2) + Math.pow(coordinates[1]- mouse_y, 2) );
 
                 // create cicle object
-                circle = new Circle( new Point(coordinates.slice()) , new Line( coordinates.slice(), [mouse_x, mouse_y]) );
+                circle = new Circle( new Dot(coordinates.slice()) , new Line( coordinates.slice(), [mouse_x, mouse_y]) );
                 
                 // add to objects
                 objects["Circle"].push(circle);
@@ -1369,10 +1334,10 @@ function onDown(event) {
                 var radius = Math.sqrt( Math.pow(coordinates[0]- mouse_x, 2) + Math.pow(coordinates[1]- mouse_y, 2) );
 
                 // create cicle object
-                circle = new Circle( new Point(coordinates.slice()) , new Line( coordinates.slice(), [mouse_x, mouse_y]) );
+                circle = new Circle( new Dot(coordinates.slice()) , new Line( coordinates.slice(), [mouse_x, mouse_y]) );
 
                 // create cloud
-                cloud = random_cloud( circle, 3);
+                cloud = random_cloud( circle, 50);
                 
                 
                 // add to objects
@@ -1401,20 +1366,37 @@ function onDown(event) {
 
                     // create a polygon object
                     polygon = new Polygon(polygon, true, true);
+                    var styles = [pincel.strokeStyle , pincel.fillStyle ];
+                    
+                    pincel.strokeStyle = "#00FF00";
+                    pincel.fillStyle = "#00FF00";
                     polygon.render(pincel);
+                    pincel.strokeStyle = styles[0];
+                    pincel.fillStyle = styles[1];
+                
                 }
             } else {
                 alert("Select an Object first");
             }
             break;
 
-            case 10:
+        case 10:
+            // if the selected object is not null
+            if (selected_object != null) {
+                if (selected_object instanceof Cloud) {
+                    // get polygon
+                    selected_object.get_voronoi(pincel);
+                }
+            } else {
+                alert("Select an Object first");
+            }
+            break;
+            case 11:
                 // if the selected object is not null
                 if (selected_object != null) {
                     if (selected_object instanceof Cloud) {
                         // get polygon
-                        selected_object.get_voronoi(pincel);
-
+                        selected_object.get_delaney(pincel);
                     }
                 } else {
                     alert("Select an Object first");
