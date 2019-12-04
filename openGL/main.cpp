@@ -2,9 +2,12 @@
 #include <GL/gl.h>
 
 #include "objects.h"
+#include "window.h"
+#include <iostream>
 
-// global objects
+// global
 Objects* objects;
+WindowController* control;
 
 // create objets
 void create_objects() {   
@@ -29,6 +32,17 @@ void render_window() {
     // flush
     glFlush();
 }
+
+// keyboard event handler
+void keyboard_evnet_handler(unsigned char key, int x, int y) {
+    switch (key) {
+        case 't': control->mode = "translate"; std::cout<<"Changing to Translation Mode"<<std::endl; break;
+        case 'r': control->mode = "rotation"; std::cout<<"Changing to Rotation Mode"<<std::endl; break;
+        case 'e': control->mode = "scale"; std::cout<<"Changing to Scale Mode"<<std::endl; break;
+        default: break;
+    }
+}
+
 
 // init function 
 void init() {
@@ -61,11 +75,16 @@ int main(int argc, char** argv) {
     init();
     // create objects
     create_objects();
+    // create window controller
+    control = new WindowController;
     // set render function
     glutDisplayFunc(render_window);
+    // set keyboard event handler
+    glutKeyboardFunc(keyboard_evnet_handler);
     // main loop
     glutMainLoop();    
     // delete objects
     delete[] objects;
+    delete[] control;
     return 0;
 }

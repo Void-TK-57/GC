@@ -5,7 +5,7 @@ CPP= g++
 CFLAGS = -lglut -lGL -lGLEW -lGLU
 
 # Objects:
-OBJECTS = objects.cpp main.cpp
+OBJECTS = objects.cpp main.cpp window.cpp
 
 
 # Targets:
