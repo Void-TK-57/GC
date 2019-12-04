@@ -7,11 +7,13 @@
 #include <vector>
 
 // color struct
-typedef struct rgb {
-    float r;
-    float g;
-    float b;
-} rgb;
+class rgb {
+public:
+    float r, g, b;
+
+    rgb(float, float, float);
+    ~rgb();
+};
 
 class Point {
 public:

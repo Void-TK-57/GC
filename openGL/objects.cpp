@@ -11,6 +11,7 @@
 
 
 Point::Point(double x_, double y_, double z_, rgb color_ ) : x(x_), y(y_), z(z_), color(color_) {}
+Point::~Point() {}
 
 // function to check collision with a click x, y with a toleranceerance
 bool Point::collision(double p_x, double p_y, double p_z, int tolerance = 5) {
@@ -32,6 +33,7 @@ void Point::render() {
 
 
 Line::Line(Point p1_, Point p2_, rgb color_ ) : p1(p1_), p2(p2_), color(color_) {}
+Line::~Line() {}
 
 
 // function to render the point
@@ -50,7 +52,7 @@ void Line::render() {
 
 
 Polygon::Polygon(Point* points_, int n_, rgb color_) : points(points_), n(n_), color(color_) {}
-Polygon::~Polygon() { delete[] points }
+Polygon::~Polygon() { delete[] points; }
 
 
 // function to render the point
@@ -72,6 +74,7 @@ void Polygon::render() {
 
 
 Triangle::Triangle(Point p1_, Point p2_, Point p3_, rgb color_ ) : p1(p1_), p2(p2_), p3(p3_), color(color_) {}
+Triangle::~Triangle() {}
 
 /* function to check collision with a click x, y with a toleranceerance
 bool Line::collision(float p_x, float p_y, int tolerance = 5) {
@@ -102,6 +105,14 @@ Objects::Objects() {
     std::vector< Polygon > polygons;
 }
 
+Objects::~Objects() {
+    // for each object, delete it
+    points.clear();    
+    lines.clear();
+    triangles.clear();
+    polygons.clear();    
+}
+
 void Objects::render() {
     // if its not null, for each elemente call render
     for (auto it = points.begin(); it!=points.end(); ++it) it->render();
@@ -109,3 +120,11 @@ void Objects::render() {
     for (auto it = triangles.begin(); it!=triangles.end(); ++it) it->render();
     for (auto it = polygons.begin(); it!=polygons.end(); ++it) it->render();
 }
+
+
+// ==========================================================================================================================
+// rgb Class
+// ==========================================================================================================================
+
+rgb::rgb(float r_, float g_, float b_) : r(r_), g(g_), b(b_) {}
+rgb::~rgb() {}
