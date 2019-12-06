@@ -12,6 +12,7 @@ public:
     float r, g, b;
 
     rgb(float, float, float);
+    rgb();
     ~rgb();
 };
 
@@ -38,6 +39,7 @@ public:
     double tx, ty, tz, sx, sy, sz, angle;
     rgb color; 
     Point(double, double, double, rgb);
+    Point();
     ~Point();
 
     bool collision(double, double, double, int);
@@ -58,6 +60,7 @@ public:
     double tx, ty, tz, sx, sy, sz, angle;
     rgb color; 
     Line(Point, Point, rgb);
+    Line();
     ~Line();
 
     bool collision(double, double, double, int);
@@ -77,6 +80,7 @@ public:
     int n;
     rgb color; 
     Polygon(Point*, int, rgb);
+    Polygon();
     ~Polygon();
 
     bool collision(double, double, double, int);
@@ -106,5 +110,26 @@ public:
     virtual Point* get_center();
 };
 
+// example for test (virus object)
+
+class Virus : public Object {
+public:
+    int n_legs;
+    Line* legs;
+    Polygon head;
+    Polygon body;
+    double x, y, z;
+
+    Virus(double, double, double);
+    ~Virus();
+
+    // render function
+    virtual void render();
+
+    // get center function
+    virtual Point* get_center();
+
+};
+ 
 
 #endif

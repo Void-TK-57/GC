@@ -10,15 +10,13 @@ WindowController* control;
 
 // create objets
 void create_objects() { 
-    // point
-    Point p1( 300.0, 200.0, 0.0, rgb(1.0f, 1.0f, 1.0f));
-    Point p2( 250.0, 230.0, 0.0, rgb(1.0f, 1.0f, 1.0f));
-    Point p3( 200.0, 200.0, 0.0, rgb(1.0f, 1.0f, 1.0f));
-    Triangle* t = new Triangle(p1, p2, p3, rgb(0.0f, 0.0f, 1.0f));
+    // create virus
+    Virus* v = new Virus(250.0, 200.0, 0.0);
     // add
-    control->objects.push_back(t);
+    control->objects.push_back(v);
+
     // set selected
-    control->selected = t;
+    control->selected = v;
 }
 
 // render window
