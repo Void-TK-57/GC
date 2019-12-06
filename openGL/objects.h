@@ -15,6 +15,9 @@ public:
     ~rgb();
 };
 
+// for c++ shity header things
+class Point;
+
 class Object {
 public:
     Object();
@@ -22,8 +25,10 @@ public:
     double tx, ty, tz, sx, sy, sz, angle;
     // render function
     virtual void render();
+
     // get center function
-    
+    virtual Point* get_center();
+
 };
 
 class Point : public Object{
@@ -37,7 +42,13 @@ public:
 
     bool collision(double, double, double, int);
 
+    // render function
     virtual void render();
+
+    // get center function
+    virtual Point* get_center();
+
+    
 };
 
 class Line : public Object{
@@ -51,7 +62,11 @@ public:
 
     bool collision(double, double, double, int);
 
+    // render function
     virtual void render();
+
+    // get center function
+    virtual Point* get_center();
 };
 
 class Polygon : public Object{
@@ -66,7 +81,11 @@ public:
 
     bool collision(double, double, double, int);
 
+    // render function
     virtual void render();
+
+    // get center function
+    virtual Point* get_center();
 };
 
 class Triangle : public Object {
@@ -80,25 +99,12 @@ public:
 
     bool collision(double, double, double, int);
 
-    virtual void render();
-};
-
-
-// objects class
-class Objects {
-public:
-    // vector of objects
-    std::vector< Point > points;
-    std::vector< Line > lines;
-    std::vector< Triangle > triangles;
-    std::vector< Polygon > polygons;
-    
-    // constructor
-    Objects();
-    ~Objects();
-
+    // render function
     virtual void render();
 
+    // get center function
+    virtual Point* get_center();
 };
+
 
 #endif

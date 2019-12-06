@@ -5,7 +5,6 @@
 #include <GL/freeglut.h>
 #include <GL/gl.h>
 
-#define _USE_MATH_DEFINES
  
 #include <cmath>
 
@@ -31,6 +30,13 @@ void Point::render() {
     glEnd();
 }
 
+Point* Point::get_center() {
+    // create point
+    Point* center = new Point(x, y, z, color);
+    // return center
+    return center;
+}
+
 // ==========================================================================================================================
 // Line Class
 // ==========================================================================================================================
@@ -48,6 +54,13 @@ void Line::render() {
         glVertex3f(p1.x, p1.y, p1.z);
         glVertex3f(p2.x, p2.y, p2.z);
     glEnd();
+}
+
+Point* Line::get_center() {
+    // create point with the median value of the coordinates of both points
+    Point* center = new Point((p1.x + p2.x)/2.0, (p1.y + p2.y)/2.0, (p1.z + p2.z)/2.0, color);
+    // return center
+    return center;
 }
 
 // ==========================================================================================================================
@@ -72,6 +85,26 @@ void Polygon::render() {
     glEnd();
 }
 
+
+Point* Polygon::get_center() {
+    // coordinates of center point
+    double x = 0.0, y = 0.0, z = 0.0;
+    // for each point
+    for (int i = 0; i < n; i++) {
+        // add each coordinate
+        x += points[i].x;
+        y += points[i].y;
+        z += points[i].z;
+    }
+    x = x / ( (double) n );
+    y = y / ( (double) n );
+    z = z / ( (double) n );
+    // create point with the median value of the coordinates of both points
+    Point* center = new Point(x, y, z, color);
+    // return center
+    return center;
+}
+
 // ==========================================================================================================================
 // Triangle Class
 // ==========================================================================================================================
@@ -79,12 +112,6 @@ void Polygon::render() {
 
 Triangle::Triangle(Point p1_, Point p2_, Point p3_, rgb color_ ) : p1(p1_), p2(p2_), p3(p3_), color(color_), Object() {}
 Triangle::~Triangle() {}
-
-/* function to check collision with a click x, y with a toleranceerance
-bool Line::collision(float p_x, float p_y, int tolerance = 5) {
-    return (x < p_x + tolerance) && (x > p_x - tolerance) && (y < p_y + tolerance) && (y > p_y - tolerance);
-}
-*/
 
 // function to render the point
 void Triangle::render() {
@@ -97,32 +124,11 @@ void Triangle::render() {
     glEnd();
 }
 
-// ==========================================================================================================================
-// Objects Class
-// ==========================================================================================================================
-
-
-Objects::Objects() {
-    std::vector< Point > points;
-    std::vector< Line > lines;
-    std::vector< Triangle > triangles;
-    std::vector< Polygon > polygons;
-}
-
-Objects::~Objects() {
-    // for each object, delete it
-    points.clear();    
-    lines.clear();
-    triangles.clear();
-    polygons.clear();    
-}
-
-void Objects::render() {
-    // if its not null, for each elemente call render
-    for (auto it = points.begin(); it!=points.end(); ++it) it->render();
-    for (auto it = lines.begin(); it!=lines.end(); ++it) it->render();
-    for (auto it = triangles.begin(); it!=triangles.end(); ++it) it->render();
-    for (auto it = polygons.begin(); it!=polygons.end(); ++it) it->render();
+Point* Triangle::get_center() {
+    // create point with the median value of the coordinates of both points
+    Point* center = new Point((p1.x + p2.x + p3.x)/3.0, (p1.y + p2.y + p3.y)/3.0, (p1.z + p2.z + p3.z)/3.0, color);
+    // return center
+    return center;
 }
 
 
@@ -145,3 +151,6 @@ Object::Object() {
 
 
 void Object::render() {}
+
+Point* Object::get_center() { return new Point(0.0, 0.0, 0.0, rgb(0.0f, 0.0f, 0.0f)); }
+

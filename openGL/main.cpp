@@ -17,6 +17,8 @@ void create_objects() {
     Triangle* t = new Triangle(p1, p2, p3, rgb(0.0f, 0.0f, 1.0f));
     // add
     control->objects.push_back(t);
+    // set selected
+    control->selected = t;
 }
 
 // render window
@@ -30,13 +32,21 @@ void render_window() {
     glFlush();
 }
 
-
 // keyboard event handler by char
 void keyboard_evnet_handler(unsigned char key, int x, int y) {
     switch (key) {
-        case 't': control->mode = "translate"; std::cout<<">> Changing to Translation Mode"<<std::endl; break;
-        case 'r': control->mode = "rotation"; std::cout<<">> Changing to Rotation Mode"<<std::endl; break;
-        case 'e': control->mode = "scale"; std::cout<<">> Changing to Scale Mode"<<std::endl; break;
+        case 't': 
+            control->mode = "translate"; 
+            std::cout<<">> Changing to Translation Mode"<<std::endl; 
+            break;
+        case 'r': 
+            control->mode = "rotation"; 
+            std::cout<<">> Changing to Rotation Mode"<<std::endl; 
+            break;
+        case 'e': 
+            control->mode = "scale"; 
+            std::cout<<">> Changing to Scale Mode"<<std::endl; 
+            break;
     }
 }
 
@@ -50,12 +60,14 @@ void keyboard_evnet_handler(int key, int x, int y) {
             control->input(0, -1);
             break;
         case GLUT_KEY_LEFT:
-            control->input(1, 0);
-            break;
-        case GLUT_KEY_RIGHT:
             control->input(-1, 0);
             break;
+        case GLUT_KEY_RIGHT:
+            control->input(1, 0);
+            break;
     }
+    // redisplay
+    glutPostRedisplay();
 }
 
 // init function 
@@ -87,7 +99,7 @@ int main(int argc, char** argv) {
     std::cout<<">> openGL init"<<std::endl;
     glutInit(&argc, argv);
     // init window
-    std::cout<<"openGL paramter init"<<std::endl;
+    std::cout<<">> openGL paramter init"<<std::endl;
     init();
     // create window controller
     std::cout<<">> Creating control"<<std::endl;
