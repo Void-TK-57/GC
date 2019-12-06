@@ -5,12 +5,16 @@
 #include <GL/freeglut.h>
 #include <GL/gl.h>
 
+#define _USE_MATH_DEFINES
+ 
+#include <cmath>
+
 // ==========================================================================================================================
 // Point Class
 // ==========================================================================================================================
 
 
-Point::Point(double x_, double y_, double z_, rgb color_ ) : x(x_), y(y_), z(z_), color(color_) {}
+Point::Point(double x_, double y_, double z_, rgb color_ ) : x(x_), y(y_), z(z_), color(color_), Object() {}
 Point::~Point() {}
 
 // function to check collision with a click x, y with a toleranceerance
@@ -32,7 +36,7 @@ void Point::render() {
 // ==========================================================================================================================
 
 
-Line::Line(Point p1_, Point p2_, rgb color_ ) : p1(p1_), p2(p2_), color(color_) {}
+Line::Line(Point p1_, Point p2_, rgb color_ ) : p1(p1_), p2(p2_), color(color_), Object() {}
 Line::~Line() {}
 
 
@@ -51,7 +55,7 @@ void Line::render() {
 // ==========================================================================================================================
 
 
-Polygon::Polygon(Point* points_, int n_, rgb color_) : points(points_), n(n_), color(color_) {}
+Polygon::Polygon(Point* points_, int n_, rgb color_) : points(points_), n(n_), color(color_), Object() {}
 Polygon::~Polygon() { delete[] points; }
 
 
@@ -73,7 +77,7 @@ void Polygon::render() {
 // ==========================================================================================================================
 
 
-Triangle::Triangle(Point p1_, Point p2_, Point p3_, rgb color_ ) : p1(p1_), p2(p2_), p3(p3_), color(color_) {}
+Triangle::Triangle(Point p1_, Point p2_, Point p3_, rgb color_ ) : p1(p1_), p2(p2_), p3(p3_), color(color_), Object() {}
 Triangle::~Triangle() {}
 
 /* function to check collision with a click x, y with a toleranceerance
@@ -128,3 +132,16 @@ void Objects::render() {
 
 rgb::rgb(float r_, float g_, float b_) : r(r_), g(g_), b(b_) {}
 rgb::~rgb() {}
+
+// ==========================================================================================================================
+// Object Class
+// ==========================================================================================================================
+
+Object::Object() {
+    // set parameters to initial values
+    tx = ty = tz = angle = 0;
+    sx = sy = sz = 1;
+}
+
+
+void Object::render() {}
