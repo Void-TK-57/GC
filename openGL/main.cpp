@@ -11,9 +11,9 @@ WindowController* control;
 // create objets
 void create_objects() { 
     // point
-    Point p1( 300.0, 200.0, -1.0, rgb(1.0f, 1.0f, 1.0f));
-    Point p2( 250.0, 250.0, 1.0, rgb(1.0f, 1.0f, 1.0f));
-    Point p3( 200.0, 200.0, -1.0, rgb(1.0f, 1.0f, 1.0f));
+    Point p1( 300.0, 200.0, 0.0, rgb(1.0f, 1.0f, 1.0f));
+    Point p2( 250.0, 230.0, 0.0, rgb(1.0f, 1.0f, 1.0f));
+    Point p3( 200.0, 200.0, 0.0, rgb(1.0f, 1.0f, 1.0f));
     Triangle* t = new Triangle(p1, p2, p3, rgb(0.0f, 0.0f, 1.0f));
     // add
     control->objects.push_back(t);
@@ -40,7 +40,7 @@ void keyboard_evnet_handler(unsigned char key, int x, int y) {
             std::cout<<">> Changing to Translation Mode"<<std::endl; 
             break;
         case 'r': 
-            control->mode = "rotation"; 
+            control->mode = "rotate"; 
             std::cout<<">> Changing to Rotation Mode"<<std::endl; 
             break;
         case 'e': 

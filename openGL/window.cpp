@@ -16,14 +16,15 @@ void WindowController::input(int side, int upwards) {
     if (selected != nullptr) {
         // check mode
         if (mode == "translate") {
-            selected->tx+=50*side;
-            selected->ty+=50*upwards;
+            selected->tx+=10*side;
+            selected->ty+=10*upwards;
+
         } else if (mode == "rotate") {
-            selected->angle = std::fmod(selected->angle + M_PI*side*0.25, M_PI);
-            std::cout <<">> Angle: "<< selected->angle << std::endl;
+            selected->angle = std::fmod(selected->angle - 360.0*side*0.01, 360.0);
+        
         } else if (mode == "scale") {
-            selected->sx *= std::pow( 2.00, (double) upwards );
-            selected->sy *= std::pow( 2.00, (double) upwards );
+            selected->sx *= std::pow( 1.05, (double) upwards );
+            selected->sy *= std::pow( 1.05, (double) upwards );
         }
     }
 }
@@ -38,15 +39,17 @@ void WindowController::render() {
 
         // get object center
         Point* center = object->get_center();
-
+        
         // translate for object center
-        glTranslated(-1.0*center->x, -1.0*center->y, -1.0*center->z);
+        glTranslated(center->x, center->y, center->z);
+
         // rotate, scale and then translate
+        glTranslated(object->tx, object->ty, object->tz);
         glRotated(object->angle, 0.0, 0.0, 1.0);
         glScaled(object->sx, object->sy, object->sz);
-        glTranslated(object->tx, object->ty, object->tz);
+
         // return to original center
-        glTranslated(center->x, center->y, center->z);
+        glTranslated(-1.0*center->x, -1.0*center->y, -1.0*center->z);
 
         // call element render function
         object->render();
