@@ -8,21 +8,23 @@
 #include <iostream>
 
 WindowController::WindowController() {
-    mode = "translate"; 
+    mode = "camera";
+    projection = "perspective";
     selected = nullptr;
-    eyex = eyey = centerx = centery = centerz = 0.0;
-    eyez = 5.0;
+    eye_x = eye_y = center_x = center_y = center_z = 0.0;
+    eye_z = 5.0*250.0;
 }
 WindowController::~WindowController() {}
 
 // input function
-void WindowController::input(int side, int upwards) {
+void WindowController::input(int side, int upwards, int near) {
     // check if selected object is not nullptr
     if (selected != nullptr) {
         // check mode
         if (mode == "translate") {
             selected->tx+=10*side;
             selected->ty+=10*upwards;
+            selected->tz+=10*near;
 
         } else if (mode == "rotate") {
             selected->angle = std::fmod(selected->angle - 360.0*side*0.01, 360.0);
@@ -30,13 +32,19 @@ void WindowController::input(int side, int upwards) {
         } else if (mode == "scale") {
             selected->sx *= std::pow( 1.05, (double) upwards );
             selected->sy *= std::pow( 1.05, (double) upwards );
+        } else if (mode == "camera") {
+            eye_x -= 15.0*side;
+            eye_y -= 15.0*upwards;
+            eye_z -= 15.0*near;
+            center_x -= 15.0*side;
+            center_y -= 15.0*upwards;
+            center_z -= 15.0*near;
+            std::cout<<">> Changing Camera = x: "<<eye_x<<", y: "<<eye_y<<", z: "<<eye_z<<std::endl; 
         }
     }
 }
 
-void WindowController::render() {
-    std::cout << ">> Calling Render..." << std::endl;
-        
+void WindowController::render() {    
     // call render for each element
     for (auto it = objects.begin(); it!=objects.end(); ++it) {
         // get element
@@ -58,7 +66,6 @@ void WindowController::render() {
         // return to original center
         glTranslated(-1.0*center->x, -1.0*center->y, -1.0*center->z);
         
-        std::cout << ">> Rendereing..." << std::endl;
         // call element render function
         object->render();
 

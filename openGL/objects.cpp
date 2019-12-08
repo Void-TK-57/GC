@@ -198,10 +198,10 @@ Cube::Cube(double x, double y, double z, double size, rgb* color_) : Object(colo
     // create polygons
     
     std::vector<Point*> f1;
-    f1.insert(f1.end(), new Point(x + size - (size/2.0), y + size - (size/2.0), z - (size/2.0) ) );
-    f1.insert(f1.end(), new Point(x + size + (size/2.0), y + size - (size/2.0), z - (size/2.0) ) );
-    f1.insert(f1.end(), new Point(x + size + (size/2.0), y + size + (size/2.0), z - (size/2.0) ) );
-    f1.insert(f1.end(), new Point(x + size - (size/2.0), y + size + (size/2.0), z - (size/2.0) ) );
+    f1.insert(f1.end(), new Point(x - (size/2.0), y - (size/2.0), z - (size/2.0) ) );
+    f1.insert(f1.end(), new Point(x + (size/2.0), y - (size/2.0), z - (size/2.0) ) );
+    f1.insert(f1.end(), new Point(x + (size/2.0), y + (size/2.0), z - (size/2.0) ) );
+    f1.insert(f1.end(), new Point(x - (size/2.0), y + (size/2.0), z - (size/2.0) ) );
     faces.insert(faces.end(), new Polygon(f1, new rgb(*color) ) );
 
     std::vector<Point*> f2;
@@ -212,41 +212,42 @@ Cube::Cube(double x, double y, double z, double size, rgb* color_) : Object(colo
     faces.insert(faces.end(), new Polygon(f2, new rgb(*color) ) );
 
     std::vector<Point*> f3;
-    f3.insert(f3.end(), new Point(x + size - (size/2.0), y + size - (size/2.0), z - (size/2.0) ) );
-    f3.insert(f3.end(), new Point(x + size - (size/2.0), y + size + (size/2.0), z - (size/2.0) ) );
+    f3.insert(f3.end(), new Point(x - (size/2.0), y - (size/2.0), z - (size/2.0) ) );
+    f3.insert(f3.end(), new Point(x - (size/2.0), y + (size/2.0), z - (size/2.0) ) );
     f3.insert(f3.end(), new Point(x - (size/2.0), y + (size/2.0), z + (size/2.0) ) );
     f3.insert(f3.end(), new Point(x - (size/2.0), y - (size/2.0), z + (size/2.0) ) );
     faces.insert(faces.end(), new Polygon(f3, new rgb(*color) ) );
 
     std::vector<Point*> f4;
-    f4.insert(f4.end(), new Point(x + size + (size/2.0), y + size - (size/2.0), z - (size/2.0) ) );
-    f4.insert(f4.end(), new Point(x + size + (size/2.0), y + size + (size/2.0), z - (size/2.0) ) );
+    f4.insert(f4.end(), new Point(x + (size/2.0), y - (size/2.0), z - (size/2.0) ) );
+    f4.insert(f4.end(), new Point(x + (size/2.0), y + (size/2.0), z - (size/2.0) ) );
     f4.insert(f4.end(), new Point(x + (size/2.0), y + (size/2.0), z + (size/2.0) ) );
     f4.insert(f4.end(), new Point(x + (size/2.0), y - (size/2.0), z + (size/2.0) ) );
     faces.insert(faces.end(), new Polygon(f4, new rgb(*color) ) );
         
 
     std::vector<Point*> f5;
-    f5.insert(f5.end(), new Point(x + size - (size/2.0), y + size - (size/2.0), z - (size/2.0) ) );
-    f5.insert(f5.end(), new Point(x + size + (size/2.0), y + size - (size/2.0), z - (size/2.0) ) );
+    f5.insert(f5.end(), new Point(x - (size/2.0), y - (size/2.0), z - (size/2.0) ) );
+    f5.insert(f5.end(), new Point(x + (size/2.0), y - (size/2.0), z - (size/2.0) ) );
     f5.insert(f5.end(), new Point(x + (size/2.0), y - (size/2.0), z + (size/2.0) ) );
     f5.insert(f5.end(), new Point(x - (size/2.0), y - (size/2.0), z + (size/2.0) ) );
     faces.insert(faces.end(), new Polygon(f5, new rgb(*color) ) );
         
 
     std::vector<Point*> f6;
-    f6.insert(f6.end(), new Point(x + size - (size/2.0), y + size + (size/2.0), z - (size/2.0) ) );
-    f6.insert(f6.end(), new Point(x + size + (size/2.0), y + size + (size/2.0), z - (size/2.0) ) );
+    f6.insert(f6.end(), new Point(x - (size/2.0), y + (size/2.0), z - (size/2.0) ) );
+    f6.insert(f6.end(), new Point(x + (size/2.0), y + (size/2.0), z - (size/2.0) ) );
     f6.insert(f6.end(), new Point(x + (size/2.0), y + (size/2.0), z + (size/2.0) ) );
     f6.insert(f6.end(), new Point(x - (size/2.0), y + (size/2.0), z + (size/2.0) ) );
     faces.insert(faces.end(), new Polygon(f6, new rgb(*color) ) );
 
-    // for each face
+    /* for each face
     int i = 0;
     for(auto it = faces.begin(); it != faces.end(); it++) {
         std::cout<<">> Face " << i++ << ": " << std::endl;
         (*it)->print();
     }
+    */
 
 }
 Cube::~Cube() {}

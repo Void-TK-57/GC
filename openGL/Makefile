@@ -14,5 +14,8 @@ all: main
 main: $(OBJECTS)
 	$(CPP) $(OBJECTS) $(CFLAGS) -o main
 
+test:
+	$(CPP) test.cpp $(CFLAGS) -o test
+
 clean:
-	rm -f main
+	rm -f test main
