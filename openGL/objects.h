@@ -12,18 +12,25 @@ public:
     float r, g, b;
 
     rgb(float, float, float);
+    rgb(const rgb&);
     rgb();
     ~rgb();
 };
 
-// for c++ shity header things
+// for c++ shitty header things
 class Point;
 
 class Object {
 public:
-    Object();
     // transformations parameters
     double tx, ty, tz, sx, sy, sz, angle;
+    // color
+    rgb* color;
+    
+    Object();
+    Object(rgb*);
+    ~Object();
+
     // render function
     virtual void render();
 
@@ -35,10 +42,8 @@ public:
 class Point : public Object{
 public:
     double x, y, z;
-    // transformations parameters
-    double tx, ty, tz, sx, sy, sz, angle;
-    rgb color; 
-    Point(double, double, double, rgb);
+    Point(double, double, double, rgb*);
+    Point(double, double, double);
     Point();
     ~Point();
 
@@ -50,16 +55,16 @@ public:
     // get center function
     virtual Point* get_center();
 
+    // print function
+    void print();
     
 };
 
 class Line : public Object{
 public:
-    Point p1, p2;
-    // transformations parameters
-    double tx, ty, tz, sx, sy, sz, angle;
-    rgb color; 
-    Line(Point, Point, rgb);
+    Point* p1, *p2;
+    Line(Point*, Point*, rgb*);
+    Line(Point*, Point*);
     Line();
     ~Line();
 
@@ -74,12 +79,9 @@ public:
 
 class Polygon : public Object{
 public:
-    Point* points;
-    // transformations parameters
-    double tx, ty, tz, sx, sy, sz, angle;
-    int n;
-    rgb color; 
-    Polygon(Point*, int, rgb);
+    std::vector<Point*> points;
+    Polygon(std::vector<Point*>, rgb*);
+    Polygon(std::vector<Point*>);
     Polygon();
     ~Polygon();
 
@@ -90,15 +92,16 @@ public:
 
     // get center function
     virtual Point* get_center();
+
+    // print points
+    void print();
 };
 
 class Triangle : public Object {
 public:
-    Point p1, p2, p3;
-    // transformations parameters
-    double tx, ty, tz, sx, sy, sz, angle;
-    rgb color; 
-    Triangle(Point, Point, Point, rgb);
+    Point* p1, *p2, *p3;
+    Triangle(Point*, Point*, Point*, rgb*);
+    Triangle(Point*, Point*, Point*);
     ~Triangle();
 
     bool collision(double, double, double, int);
@@ -110,17 +113,30 @@ public:
     virtual Point* get_center();
 };
 
-// example for test (virus object)
+class Cube : public Object {
+public:
+    std::vector<Polygon*> faces;
+    Cube(double, double, double, double, rgb*);
+    Cube(double, double, double, double);
+    ~Cube();
 
+    // render function
+    virtual void render();
+
+    // get center function
+    virtual Point* get_center();
+    
+};
+
+// example for test (virus object)
 class Virus : public Object {
 public:
-    int n_legs;
-    Line* legs;
-    Polygon head;
-    Polygon body;
+    std::vector<Line*> legs;
+    Polygon* head;
+    Polygon* body;
     double x, y, z;
 
-    Virus(double, double, double);
+    Virus(double, double, double, rgb*);
     ~Virus();
 
     // render function

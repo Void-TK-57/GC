@@ -7,7 +7,12 @@
 #include <cmath>
 #include <iostream>
 
-WindowController::WindowController() {mode = "translate"; selected = nullptr;}
+WindowController::WindowController() {
+    mode = "translate"; 
+    selected = nullptr;
+    eyex = eyey = centerx = centery = centerz = 0.0;
+    eyez = 5.0;
+}
 WindowController::~WindowController() {}
 
 // input function
@@ -30,6 +35,8 @@ void WindowController::input(int side, int upwards) {
 }
 
 void WindowController::render() {
+    std::cout << ">> Calling Render..." << std::endl;
+        
     // call render for each element
     for (auto it = objects.begin(); it!=objects.end(); ++it) {
         // get element
@@ -50,7 +57,8 @@ void WindowController::render() {
 
         // return to original center
         glTranslated(-1.0*center->x, -1.0*center->y, -1.0*center->z);
-
+        
+        std::cout << ">> Rendereing..." << std::endl;
         // call element render function
         object->render();
 
@@ -75,4 +83,5 @@ void WindowController::clear_objects() {
     // clear vector
     objects.clear();
 }
+
 

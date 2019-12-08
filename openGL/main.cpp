@@ -11,23 +11,17 @@ WindowController* control;
 // create objets
 void create_objects() { 
     // create virus
-    Virus* v = new Virus(250.0, 200.0, 0.0);
+    // Virus* p = new Virus(250.0, 400.0, 2.0 , new rgb(1.0f, 1.0f, 1.0f)); // 249.0f/255.0f, 134.0f/255.0f, 167.0f/255.0f
+
+    Cube* c = new Cube(250.0, 250.0, 250.0, 10.0, new rgb(1.0f, 1.0f, 1.0f) );
+    
     // add
-    control->objects.push_back(v);
-
+    // control->objects.push_back(p);
+    control->objects.push_back(c);
+    
     // set selected
-    control->selected = v;
-}
-
-// render window
-void render_window() {
-    // set background
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    // render objects
-    control->render();
-    // flush
-    glFlush();
+    control->selected = c;
+    
 }
 
 // keyboard event handler by char
@@ -68,6 +62,30 @@ void keyboard_evnet_handler(int key, int x, int y) {
     glutPostRedisplay();
 }
 
+
+// reshape function
+void reshape(int w, int h){
+    // viewport
+    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    // set ortho
+    glOrtho(0, 500, 0, 500, -500.0, 500.0);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+// render window
+void render_window() {
+    // set background
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    // render objects
+    control->render();
+    // flush
+    glFlush();
+}
+
+
 // init function 
 void init() {
     // set display mode
@@ -87,7 +105,7 @@ void init() {
     // load identity
     glLoadIdentity();
     // set ortho
-    glOrtho(0, 500, 0, 500, -1.0, 1.0);
+    glOrtho(0, 500, 0, 500, 0, 500.0);
     
 }
 
@@ -108,6 +126,9 @@ int main(int argc, char** argv) {
     // set render function
     std::cout<<">> Setting Render Function"<<std::endl;
     glutDisplayFunc(render_window);
+    // set reshape function
+    std::cout<<">> Setting Reshape Function"<<std::endl;
+    glutReshapeFunc(reshape);
     // set keyboard event handler for nornal and special
     std::cout<<">> Setting Keyboard Events"<<std::endl;
     glutKeyboardFunc(keyboard_evnet_handler);

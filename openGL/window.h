@@ -17,6 +17,9 @@ public:
     // mode of the tr
     std::string mode;
 
+    // projection parameters
+    double eyex, eyey, eyez, centerx, centery, centerz;
+
     WindowController();
     ~WindowController();
 
@@ -25,7 +28,7 @@ public:
     // function to clear objects
     void clear_objects();
 
-    // render function
+    // render objects function
     void render();
 
 };
