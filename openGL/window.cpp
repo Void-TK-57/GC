@@ -9,7 +9,7 @@
 
 WindowController::WindowController() {
     mode = "camera";
-    projection = "perspective";
+    projection = "orthogonal"; // perspective
     selected = nullptr;
     eye_x = eye_y = center_x = center_y = center_z = 0.0;
     eye_z = 5.0*250.0;

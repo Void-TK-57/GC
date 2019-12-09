@@ -91,7 +91,7 @@ void reshape(int w, int h){
     glLoadIdentity();
     // check type of projection
     if (control->projection == "orthogonal") {
-        glOrtho(-250.0, 250.0, -250.0, 250.0, -250.0, 250.0);
+        glOrtho(-250.0, 250.0, -250.0, 250.0, 250.0*1.5, 250.0*20.0);
     } else if (control->projection == "perspective") {
         glFrustum(-250.0, 250.0, -250.0, 250.0, 250.0*1.5, 250.0*20.0);
     }
@@ -113,7 +113,7 @@ void render_window() {
     gluLookAt(control->eye_x, control->eye_y, control->eye_z, control->center_x, control->center_y, control->center_z, 0.0, 1.0, 0.0);
     // render objects
     // control->render();
-    glutWireCube(100.0);
+    glutWireCube(50.0);
     // flush
     glFlush();
 }
