@@ -23,7 +23,7 @@ class Point;
 class Object {
 public:
     // transformations parameters
-    double tx, ty, tz, sx, sy, sz, angle;
+    double tx, ty, tz, sx, sy, sz, alpha, beta, gamma;
     // color
     rgb* color;
     

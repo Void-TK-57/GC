@@ -300,14 +300,14 @@ rgb::~rgb() {}
 
 Object::Object() {
     // set parameters to initial values
-    tx = ty = tz = angle = 0;
+    tx = ty = tz = alpha = beta = gamma = 0;
     sx = sy = sz = 1;
     color = new rgb(1.0f, 1.0f, 1.0f);
 }
 
 Object::Object(rgb* color_) : color(color_) {
     // set parameters to initial values
-    tx = ty = tz = angle = 0;
+    tx = ty = tz = alpha = beta = gamma = 0;
     sx = sy = sz = 1;
 
 }

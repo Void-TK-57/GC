@@ -18,6 +18,8 @@ public:
     std::string mode;
     // type projection
     std::string projection;
+    // ligthning
+    int difuse, ambient, specular;
 
     // projection parameters
     double eye_x, eye_y, eye_z, center_x, center_y, center_z;

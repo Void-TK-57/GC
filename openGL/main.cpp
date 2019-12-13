@@ -13,14 +13,16 @@ void create_objects() {
     // create virus
     // Virus* p = new Virus(250.0, 400.0, 2.0 , new rgb(1.0f, 1.0f, 1.0f)); // 249.0f/255.0f, 134.0f/255.0f, 167.0f/255.0f
 
-    Cube* c = new Cube(0.0, 0.0, 0.0, 150.0, new rgb(1.0f, 1.0f, 1.0f) );
+    // Cube* c = new Cube(0.0, 0.0, 0.0, 50.0, new rgb(0.318f, 0.835f, 0.498f) );
+    // create point for reference of the sphere
+    Point* p = new Point(0.0, 0.0, 0.0, new rgb(0.1f, 0.1f, 0.1f));
     
     // add
     // control->objects.push_back(p);
-    control->objects.push_back(c);
+    control->objects.push_back(p);
     
     // set selected
-    control->selected = c;
+    control->selected = p;
     
 }
 
@@ -35,13 +37,17 @@ void keyboard_evnet_handler(unsigned char key, int x, int y) {
             control->mode = "rotate"; 
             std::cout<<">> Changing to Rotation Mode"<<std::endl; 
             break;
-        case 'e': 
+        case 's': 
             control->mode = "scale"; 
             std::cout<<">> Changing to Scale Mode"<<std::endl; 
             break;
         case 'c':
             control->mode = "camera"; 
             std::cout<<">> Changing to Camera Mode"<<std::endl; 
+            break;
+        case 'l':
+            control->mode = "light"; 
+            std::cout<<">> Changing to Lightning Mode"<<std::endl; 
             break;
         case 'o':
             control->projection = "orthogonal"; 
@@ -112,8 +118,7 @@ void render_window() {
     // look at
     gluLookAt(control->eye_x, control->eye_y, control->eye_z, control->center_x, control->center_y, control->center_z, 0.0, 1.0, 0.0);
     // render objects
-    // control->render();
-    glutWireCube(50.0);
+    control->render();
     // flush
     glFlush();
 }
@@ -132,6 +137,17 @@ void init() {
     glutCreateWindow("GC");
     // clear color
     glClearColor(0.0, 0.0, 0.0, 0.0);
+    // enable light
+    glEnable(GL_LIGHTING); 
+	// glEnable(GL_LIGHT0); 
+	glEnable(GL_LIGHT1); 
+	glEnable(GL_NORMALIZE); 
+
+    // create window controller
+    std::cout<<">> Creating control"<<std::endl;
+    control = new WindowController;
+    
+	
     // reshape
     reshape(500, 500);
     
@@ -139,9 +155,6 @@ void init() {
 
 // main function
 int main(int argc, char** argv) {
-    // create window controller
-    std::cout<<">> Creating control"<<std::endl;
-    control = new WindowController;
     // init 
     std::cout<<">> openGL init"<<std::endl;
     glutInit(&argc, argv);
